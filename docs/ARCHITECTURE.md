@@ -125,6 +125,7 @@
 | `buddy/crew-chicks.ts` | 순수: 새끼(서브에이전트마다 하나, 최대 6): pane의 왜가리들에게 돌아가며 나누고, 뒤로 줄지어 따라가고, 떠날 때 반짝이 |
 | `buddy/crew-pose.ts` | 순수: 지금 그릴 그림 목록(그림, 위치, 좌우 뒤집기, 투명도)과 다음 프레임까지 기다릴 시간. 수정 중에는 부리에 나뭇가지, 생각 중에는 머리 위 점 |
 | `buddy/flock.ts` | 순수: pane 하나의 왜가리들. 에이전트가 있는 동안 설정한 수만큼 crew를 두고, 새끼를 나누고, 더 원하지 않는 crew는 다 흐려진 뒤 뺀다 |
+| `buddy/test-kit.ts` | 왜가리 테스트에서만 쓴다: 글자를 놓을 수 있는 가짜 터미널 화면(`Screen`), 무리를 프레임마다 돌리는 도우미. 앱은 import하지 않는다 |
 | `layout/grid.ts` | 순수 함수: 자동 격자에서 줄마다 pane 몇 개인지 계산 |
 | `layout/split-tree.ts` | 순수 함수: 분할 트리(가로 `row`, 세로 `column`, 비율 `sizes`). 자동 격자 트리, 삽입, 제거(형제가 공간을 나눠 가짐), 이동, 교체 |
 | `layout/split-rects.ts` | 순수 함수: 트리를 px 박스와 경계선 박스로. 가장자리를 정수로 반올림해 글자가 흐려지지 않게 한다 |
@@ -145,6 +146,8 @@
 `ipc/`, `i18n/`, `layout/grid.ts`는 다른 앱 모듈을 import하지 않는다.
 `app/`에서 `ipc/`의 명령을 부르는 곳은 `app/agent-hooks.ts`와 `app/log.ts`(dev 로그를 백엔드 터미널로)뿐이다.
 `layout/split-tree.ts`, `split-rects.ts`, `drop-zone.ts`는 `layout/` 안의 순수 모듈만 import한다(DOM 없음).
+
+단위 테스트는 테스트하는 모듈 옆의 `*.test.ts`다(vitest, `npm test`, 설정은 저장소 맨 위 `vitest.config.ts`). 순수 모듈을 다룬다: 왜가리(`buddy/`), 에이전트 상태와 소식 검사(`agent/`), 붙여넣기(`terminal/clipboard.ts`), 설정 저장과 초기화(`app/prefs.test.ts`), 자동 격자, 시간 표시. 앱 코드는 테스트 파일을 import하지 않아서 번들에 들어가지 않는다.
 
 ## 백엔드 `src-tauri/src/`
 

@@ -195,6 +195,7 @@ npm install
 npm run tauri:dev                    # development, with logs in the terminal
 npm run tauri build -- --no-bundle   # release exe: src-tauri\target\release\heron.exe
 npm run tauri build                  # release exe plus installers
+npm test                             # frontend unit tests (vitest)
 ```
 
 Development logs from both Rust and the frontend appear in the `tauri:dev` terminal. Set

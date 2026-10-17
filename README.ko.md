@@ -183,6 +183,7 @@ npm install
 npm run tauri:dev                    # 개발 실행, 로그가 터미널에 나옴
 npm run tauri build -- --no-bundle   # release exe: src-tauri\target\release\heron.exe
 npm run tauri build                  # release exe와 설치 프로그램
+npm test                             # 프론트 단위 테스트(vitest)
 ```
 
 개발 실행 중에는 Rust와 프론트 로그가 `tauri:dev` 터미널에 함께 나와요. 로그 레벨은
