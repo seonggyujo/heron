@@ -1,9 +1,9 @@
 import { agentHooksOn, setAgentHooks } from "../app/agent-hooks";
-import { loadFontSize } from "../app/font-size";
+import { fontSizePref } from "../app/font-size";
 import { createLogger } from "../app/log";
 import { motionEnabled, setMotion } from "../app/motion";
 import { closeOnExitPref, heronsPref, restoreWorkspacePref } from "../app/prefs";
-import { loadTheme, type Theme } from "../app/theme";
+import { currentTheme, type Theme } from "../app/theme";
 import { hooksErrorText } from "../i18n/hooks-error";
 import { getLang, setLang, t } from "../i18n/lang";
 import { createConfirmButton } from "./confirm-button";
@@ -66,7 +66,7 @@ function preferenceRows(actions: SettingsActions): HTMLElement[] {
   return [
     row(
       s.theme,
-      createThemeToggle(loadTheme(), (theme) => {
+      createThemeToggle(currentTheme(), (theme) => {
         log.info(`theme ${theme}`);
         actions.onTheme(theme);
       }),
@@ -78,7 +78,7 @@ function preferenceRows(actions: SettingsActions): HTMLElement[] {
         setLang(lang);
       }),
     ),
-    row(s.fontSize, createFontSizeControl(loadFontSize(), actions.onFontSize)),
+    row(s.fontSize, createFontSizeControl(fontSizePref.get(), actions.onFontSize)),
     row(
       s.animations,
       createSwitch(s.animations, motionEnabled(), (on) => {

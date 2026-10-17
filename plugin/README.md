@@ -26,6 +26,18 @@ If you had a status line, the script runs it with the same input and prints what
 the status line looks as before; its `refreshInterval` and `padding` stay. Without one, the status
 line stays empty. A status line you set later is taken in the same way at the next session start.
 
+## Update
+
+Claude Code does not update plugins from this marketplace on its own unless you turn on
+auto-update for it. To get a new version, run this in your shell (or pick **Update now** for the
+plugin in `/plugin`):
+
+```
+claude plugin update heron-limits@heron
+```
+
+The next session start puts the new status line script in `~/.claude/heron-limits/`.
+
 Inside a Heron pane the script also writes `<pane>.status.json` in the folder Heron names
 (`HERON_AGENT_DIR`): the limits with their reset times, the context use, and the selected model.
 Outside Heron it writes nothing. The file stays on your machine.

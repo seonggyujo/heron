@@ -34,16 +34,16 @@
 | `app/workspace.ts` | 순수 함수: 저장한 지난 작업의 모양(pane마다 셸, 폴더, 세션 id와 사용자 배치)과 읽어 온 값 검사. 모르는 셸은 기본 셸로, UUID가 아닌 세션은 버린다 |
 | `app/workspace-store.ts` | 지난 작업을 localStorage(`heron.workspace`)에 읽고 쓰기. 설정 초기화로 지워져도 다음 저장 때 다시 쓴다 |
 | `app/perf-monitor.ts` | dev 전용 long task(50ms 초과) 로그 |
-| `app/theme.ts` | 앱 틀 테마(black 기본, green) 적용과 저장 |
+| `app/theme.ts` | 앱 틀 테마(black 기본, green) 적용과 저장(`prefs.ts`의 `pref()`) |
 | `app/log.ts` | 범위별 로거. dev에서는 콘솔과 `tauri dev` 터미널로, prod에서는 warn/error만 콘솔로 |
-| `app/shells.ts` | 셸 표시 이름, + 버튼 기본 셸 저장 |
-| `app/font-size.ts` | 터미널 글씨 크기(10~24px) 저장 |
+| `app/shells.ts` | 셸 표시 이름, + 버튼 기본 셸 저장(`pref()`). 저장한 셸이 없어졌으면 처음 찾은 셸 |
+| `app/font-size.ts` | 터미널 글씨 크기(10~24px) 저장(`pref()`) |
 | `app/uptime-clock.ts` | 앱 전체에 1초 `setInterval` 1개. 창이 숨거나 최소화되면 멈춘다. 가끔만 째깍여야 하는 곳(일하는 에이전트가 있을 때, 한도가 보일 때)은 `switchFor`로 구독을 켜고 끈다 |
 | `app/durations.ts` | 순수 함수: 경과 시간("3m 07s")과 남은 시간("2h 13m")을 짧은 글로 |
-| `app/prefs.ts` | 작은 설정값 저장: 설정 창(애니메이션, 터미널 속 왜가리 수, exit 0이면 닫기, 지난 작업 다시 열기)과 화면이 스스로 기억하는 것(사이드바 접힘, 안내 숨김, 접은 세션 폴더), Claude Code 훅을 켰는지(초기화해도 남는다). 실패하면 기본값 |
+| `app/prefs.ts` | 작은 설정값 저장(`pref()`, 값마다 `heron.*` 키 하나): 설정 창(애니메이션, 터미널 속 왜가리 수, exit 0이면 닫기, 지난 작업 다시 열기)과 화면이 스스로 기억하는 것(사이드바 접힘, 안내 숨김, 접은 세션 폴더), Claude Code 훅을 켰는지(초기화해도 메모리에는 남는다). 테마, 글씨 크기, 기본 셸도 각 모듈이 `pref()`로 만든다. 만든 값은 모두 초기화 목록에 저절로 들어간다. 언어는 `i18n/lang.ts`가 따로 저장한다(`i18n/`은 앱 모듈을 import하지 않는다). 실패하면 기본값 |
 | `app/agent-hooks.ts` | Heron의 Claude Code 훅이 켜졌는지(사이드바와 설정이 함께 본다), 켜고 끄기. 켠 선택을 기억해서, 시작할 때 업데이트로 빠졌거나 다른 heron.exe를 가리키는 훅을 다시 넣는다 |
 | `app/motion.ts` | 설정 > Animations. 끄면 `<html class="no-motion">`으로 CSS 전환·애니메이션을 멈추고, pane 등장·FLIP·출력 글로우와 터미널 속 왜가리도 끈다. pane 움직임이 함께 쓰는 ease-out 곡선(`EASE_OUT`) |
-| `app/reset.ts` | 설정 > Reset: 저장된 `heron.*` 값을 모두 지워 기본값으로. 화면 적용은 `main.ts`가 한다 |
+| `app/reset.ts` | 설정 > Reset: 저장된 `heron.*` 값을 모두 지우고 `pref()` 값을 기본값으로. 화면 적용은 `main.ts`가 한다 |
 | `app/visibility.ts` | 창 숨김·최소화 감지(WebView2는 최소화해도 `document.hidden`이 false라 Tauri 창 상태도 본다), `app-hidden` class, 애니메이션 허용 여부 |
 | `ui/titlebar.ts` | macOS식 타이틀바. 왼쪽 로고, 오른쪽 action 슬롯과 신호등(Windows 순서). 비활성 표시는 Tauri 창 포커스 이벤트로. 빈 곳을 우클릭하면 창의 시스템 메뉴(`ipc/window-menu.ts`) |
 | `ui/new-terminal-button.ts` | [+ 새 터미널 (선택된 셸)][▾] split 버튼. + 를 눌러야 생성 |
@@ -202,12 +202,12 @@
 | `pty/registry.rs` | id → 세션 맵. 락은 조회·삽입·삭제 동안만. 새 id가 정해진 뒤 호출한 쪽에 셸 명령을 받아 실행한다 |
 | `pty/session.rs` | 세션 하나: 생성, 입력 큐, 크기 조정, pause, kill, close |
 | `pty/shell.rs` | 셸 종류(pwsh 7, Windows PowerShell, cmd, Git Bash), 설치 여부, 실행 명령 |
-| `pty/cwd_report.rs` | 셸 세션에만 현재 폴더 신호(OSC 9;9) 훅을 건다. 화면과 프로필 파일은 그대로 |
+| `pty/cwd_report.rs` | 셸 세션에만 현재 폴더 신호(OSC 9;9) 훅을 건다. 화면과 프로필 파일은 그대로. 셸 종류는 모르고, `shell.rs`가 셸에 맞는 함수를 부른다 |
 | `pty/writer.rs` | 입력 스레드. 명령은 큐에 넣기만 해서 키 순서 보장, 메인 스레드 안 막음 |
 | `pty/reader.rs` | 64KB 블로킹 read 스레드, 용량 4의 bounded channel로 backpressure |
 | `pty/gate.rs` | pause 스위치(Mutex + Condvar) |
 | `pty/batcher.rs` | 12ms 간격 또는 64KB 단위 flush, `InvokeResponseBody::Raw`로 전송 |
-| `pty/waiter.rs` | 자식 종료 대기 → 콘솔 닫기 → 마지막 출력 flush → `pty-exit` 발행 |
+| `pty/waiter.rs` | 자식 종료 대기 → 콘솔 닫기(`session.rs`가 넘긴 함수) → 마지막 출력 flush → `pty-exit` 발행 |
 
 의존 방향: `lib.rs`, `commands/` → `claude_hooks/`, `agent/`, `pty/`, `sessions/`, `git/`, `attention.rs`, `launch.rs`, `window_menu.rs` → `claude_version.rs`, `claude_dir.rs`, `epoch.rs`, `text.rs`, `hidden_command.rs`, `file_stamp.rs`.
 `#[tauri::command]` 함수는 `commands/`에만 둔다.
@@ -224,7 +224,8 @@ Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍�
 | `setup.js` | `sync`(SessionStart 훅): 상태줄 자리를 가져오고, 쓰던 상태줄은 저장해서 우리 것 안에서 돌린다(`refreshInterval`, `padding`은 그대로). 설치된 사본을 플러그인 버전에 맞춘다. `first-run`(UserPromptSubmit 훅): 처음 한 번만 `sync`. `disable`: 쓰던 상태줄을 돌려놓고 사본을 지운다. settings.json은 `~/.claude/heron-limits/`의 사본을 가리킨다(플러그인 폴더는 버전마다 바뀌고, 플러그인을 지워도 사본은 계속 돈다) |
 | `statusline.js` | 상태줄 진입점: Heron pane 안이면 `heron-file.js`로 파일을 쓰고, `previous.js`가 돌린 쓰던 상태줄의 출력을 그대로 찍는다. 없으면 아무것도 찍지 않는다 |
 | `heron-file.js` | `<키>.status.json`에 한도(사용률, 초기화 시각), 컨텍스트 사용률, 선택 모델(`model.id`, 훅이 모르는 이어서 연 세션용). pane 키 모양이 아니면 쓰지 않는다 |
-| `previous.js` | 저장한 사용자 상태줄을 같은 입력으로 실행(Git Bash, 없으면 기본 셸). 3초 안에 끝나지 않거나 실패하면 출력 없음 |
+| `previous.js` | 저장한 사용자 상태줄을 같은 입력으로 실행(Git Bash, 없으면 기본 셸). 3초 안에 끝나지 않거나 실패하면 출력 없음. 저장 파일 이름(`setup.js`가 쓴다) |
+| `replace-file.js` | 파일을 한 번에 바꾸기(임시 파일에 쓰고 이름 바꾸기). `setup.js`와 `heron-file.js`가 쓴다 |
 | `skills/disable/` | `/heron-limits:disable` |
 | `hooks/hooks.json` | 플러그인의 Claude Code 훅: SessionStart에 `setup.js sync`, UserPromptSubmit에 `setup.js first-run` |
 | `README.md` | 플러그인 설명과 설치, 끄기 |

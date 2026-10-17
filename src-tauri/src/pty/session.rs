@@ -59,7 +59,8 @@ impl PtySession {
             killer: Mutex::new(child.clone_killer()),
             gate,
         });
-        waiter::spawn(app, id, child, session.clone(), batcher);
+        let closing = session.clone();
+        waiter::spawn(app, id, child, move || closing.close(), batcher);
         Ok(session)
     }
 

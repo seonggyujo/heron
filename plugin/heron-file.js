@@ -7,8 +7,8 @@
  */
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
+const { replaceFile } = require('./replace-file');
 
 const VERSION = 1;
 
@@ -45,10 +45,8 @@ function write(input) {
   const file = target();
   if (!file) return;
   try {
-    const tmp = file + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(statusOf(input || {})));
-    fs.renameSync(tmp, file);
+    replaceFile(file, JSON.stringify(statusOf(input || {})));
   } catch (e) {}
 }
 
-module.exports = { write, statusOf };
+module.exports = { write };

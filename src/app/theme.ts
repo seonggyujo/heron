@@ -1,25 +1,24 @@
-// App chrome theme (styles/themes.css). The terminal is never themed.
-// localStorage is a convenience only: any failure falls back to black.
+import { pref } from "./prefs";
+
+// App chrome theme (styles/themes.css), black unless the user picked green.
+// The terminal is never themed.
 
 export type Theme = "green" | "black";
 
-const KEY = "heron.theme";
+const themePref = pref<Theme>("heron.theme", "black", (raw) => (raw === "green" || raw === "black" ? raw : undefined));
 
-export function loadTheme(): Theme {
-  try {
-    if (localStorage.getItem(KEY) === "green") return "green";
-  } catch {
-    /* storage unavailable */
-  }
-  return "black";
+export function currentTheme(): Theme {
+  return themePref.get();
 }
 
-export function applyTheme(theme: Theme): void {
+/** Shows the saved theme: at startup, before any DOM is built, and after a reset. */
+export function applyTheme(): void {
+  const theme = themePref.get();
   if (theme === "green") delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem(KEY, theme);
-  } catch {
-    /* storage unavailable */
-  }
+}
+
+export function setTheme(theme: Theme): void {
+  themePref.set(theme);
+  applyTheme();
 }

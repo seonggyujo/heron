@@ -56,11 +56,16 @@ impl ShellKind {
             .ok_or_else(|| format!("{self:?} is not installed"))?;
         let mut cmd = CommandBuilder::new(program);
         match self {
-            ShellKind::Pwsh | ShellKind::PowerShell => cmd.arg("-NoLogo"),
-            ShellKind::GitBash => cmd.args(["--login", "-i"]),
-            ShellKind::Cmd => {}
+            ShellKind::Pwsh | ShellKind::PowerShell => {
+                cmd.arg("-NoLogo");
+                cwd_report::powershell(&mut cmd);
+            }
+            ShellKind::GitBash => {
+                cmd.args(["--login", "-i"]);
+                cwd_report::bash(&mut cmd);
+            }
+            ShellKind::Cmd => cwd_report::cmd(&mut cmd),
         }
-        cwd_report::apply(self, &mut cmd);
         match cwd.filter(|dir| dir.is_dir()) {
             Some(dir) => cmd.cwd(dir),
             None => {

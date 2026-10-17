@@ -1,20 +1,28 @@
-// Small user preferences: the ones set in the settings panel and a few the
-// UI remembers on its own (agent sidebar, folded session folders). localStorage is a convenience
-// only: any failure keeps the default. Theme, font size and language have
-// their own modules (theme.ts, font-size.ts, i18n/lang.ts).
+// Small user preferences, each under its own heron.* key: the ones set in
+// the settings panel and a few the UI remembers on its own (agent sidebar,
+// folded session folders). theme.ts, font-size.ts and shells.ts make theirs
+// with pref() too; the language stays in i18n/lang.ts, which imports no app
+// module. localStorage is a convenience only: any failure keeps the default.
 
 export interface Pref<T> {
   get(): T;
   set(value: T): void;
-  /** Back to the default; the stored value is dropped by forgetSettings(). */
-  reset(): void;
 }
 
-function pref<T>(
+interface PrefOptions<T> {
+  format?: (value: T) => string;
+  /** resetPrefs() leaves the value as it is. */
+  keepOnReset?: boolean;
+}
+
+/** One entry per pref made, so a reset has no list to keep up to date. */
+const resets: (() => void)[] = [];
+
+export function pref<T>(
   key: string,
   fallback: T,
   parse: (raw: string) => T | undefined,
-  format: (value: T) => string = String,
+  { format = String, keepOnReset = false }: PrefOptions<T> = {},
 ): Pref<T> {
   let value = fallback;
   try {
@@ -23,11 +31,13 @@ function pref<T>(
   } catch {
     /* storage unavailable */
   }
+  if (!keepOnReset) {
+    resets.push(() => {
+      value = fallback;
+    });
+  }
   return {
     get: () => value,
-    reset: () => {
-      value = fallback;
-    },
     set(next) {
       value = next;
       try {
@@ -78,13 +88,15 @@ export const pluginHintHiddenPref = pref("heron.pluginHintHidden", false, bool);
 export const hooksOfferHiddenPref = pref("heron.hooksOfferHidden", false, bool);
 
 /** Folders whose recent sessions the user folded (keys of agent/session-groups.ts). */
-export const foldedSessionGroupsPref = pref<string[]>("heron.foldedSessionGroups", [], strings, JSON.stringify);
+export const foldedSessionGroupsPref = pref<string[]>("heron.foldedSessionGroups", [], strings, { format: JSON.stringify });
 
-/** The user turned Heron's Claude Code hooks on (see app/agent-hooks.ts). */
-export const agentHooksWantedPref = pref("heron.agentHooks", false, bool);
+/**
+ * The user turned Heron's Claude Code hooks on (see app/agent-hooks.ts). A
+ * reset leaves it in memory: the hooks stay in Claude Code's settings.
+ */
+export const agentHooksWantedPref = pref("heron.agentHooks", false, bool, { keepOnReset: true });
 
+/** Settings > Reset: every pref back to its default (app/reset.ts drops the stored values). */
 export function resetPrefs(): void {
-  // agentHooksWantedPref stays: the hooks stay in Claude Code's settings.
-  const prefs = [motionPref, heronsPref, closeOnExitPref, restoreWorkspacePref, sidebarCollapsedPref, pluginHintHiddenPref, hooksOfferHiddenPref];
-  [...prefs, foldedSessionGroupsPref].forEach((p) => p.reset());
+  resets.forEach((reset) => reset());
 }

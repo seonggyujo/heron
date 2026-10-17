@@ -1,11 +1,11 @@
 import "./styles/stylesheets";
-import { loadFontSize, saveFontSize } from "./app/font-size";
+import { fontSizePref } from "./app/font-size";
 import { createLogger } from "./app/log";
 import { applyMotion } from "./app/motion";
 import { installLongTaskMonitor } from "./app/perf-monitor";
 import { forgetSettings } from "./app/reset";
-import { loadDefaultShell, saveDefaultShell, SHELL_LABELS } from "./app/shells";
-import { applyTheme, loadTheme } from "./app/theme";
+import { defaultShellOf, defaultShellPref, SHELL_LABELS } from "./app/shells";
+import { applyTheme, setTheme } from "./app/theme";
 import { UptimeClock } from "./app/uptime-clock";
 import { installVisibilityTracking } from "./app/visibility";
 import { applyLang } from "./i18n/lang";
@@ -37,8 +37,7 @@ const log = createLogger("app");
 async function main(): Promise<void> {
   // Before any DOM is built, so the first paint already has the theme
   // and the language.
-  const theme = loadTheme();
-  applyTheme(theme);
+  applyTheme();
   applyLang();
   applyMotion();
   installShortcutGuard();
@@ -62,7 +61,7 @@ async function main(): Promise<void> {
   document.body.append(titlebar.el, middle, agents.usageBar);
 
   const shells = await listShells();
-  let defaultShell = loadDefaultShell(shells);
+  let defaultShell = defaultShellOf(shells);
   log.info(`shells: ${shells.join(", ")}; default ${defaultShell}`);
 
   // New panes open in the folder Heron was opened on ("Open in Heron"), else home.
@@ -76,11 +75,10 @@ async function main(): Promise<void> {
   workspace.append(empty.el);
 
   const tidy = createTidyButton(() => panes.tidy());
-  const fontSize = loadFontSize();
   const panes = new PaneManager(
     workspace,
     clock,
-    fontSize,
+    fontSizePref.get(),
     (c) => {
       count.update(c);
       empty.setVisible(c.terminals === 0);
@@ -113,7 +111,7 @@ async function main(): Promise<void> {
   // The menu only selects the shell; the + button opens it.
   const menu = createShellMenu(shells, defaultShell, (shell) => {
     log.info(`default shell ${shell}`);
-    saveDefaultShell(shell);
+    defaultShellPref.set(shell);
     setDefaultShell(shell);
   });
   document.body.append(menu.el);
@@ -125,18 +123,18 @@ async function main(): Promise<void> {
   );
   // Theme, font size and the other preferences live behind the gear.
   const settings = createSettings({
-    onTheme: applyTheme,
+    onTheme: setTheme,
     onFontSize: (px) => {
       panes.setFontSize(px);
-      saveFontSize(px);
+      fontSizePref.set(px);
     },
     onReset: () => {
       forgetSettings();
-      applyTheme(loadTheme());
+      applyTheme();
       applyLang();
       applyMotion();
-      panes.setFontSize(loadFontSize());
-      setDefaultShell(loadDefaultShell(shells));
+      panes.setFontSize(fontSizePref.get());
+      setDefaultShell(defaultShellOf(shells));
       agents.refresh();
     },
   });

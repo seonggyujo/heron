@@ -16,22 +16,24 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { SAVED_NAME } = require('./previous');
+const { replaceFile } = require('./replace-file');
 
 const CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 const SETTINGS_FILE = path.join(CONFIG_DIR, 'settings.json');
 const DATA_DIR = path.join(CONFIG_DIR, 'heron-limits');
-const PREVIOUS_FILE = path.join(DATA_DIR, 'previous-statusline.json');
+const PREVIOUS_FILE = path.join(DATA_DIR, SAVED_NAME);
 // Written by the first sync, so the per-message hook can stop early.
 const INITIALIZED_FILE = path.join(DATA_DIR, 'initialized');
-const SCRIPTS = ['statusline.js', 'heron-file.js', 'previous.js'];
+// What a script requires comes before it, so a status line that starts while they are being
+// copied finds what it needs.
+const SCRIPTS = ['replace-file.js', 'heron-file.js', 'previous.js', 'statusline.js'];
 // Forward slashes: the command runs in a shell, and backslashes break it on Windows.
 const COMMAND = 'node "' + path.join(DATA_DIR, 'statusline.js').split(path.sep).join('/') + '"';
 
 function writeAtomic(file, text) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = file + '.' + process.pid + '.tmp';
-  fs.writeFileSync(tmp, text);
-  fs.renameSync(tmp, file);
+  replaceFile(file, text);
 }
 
 /** Copies the scripts the status line runs when they differ from the plugin's. */

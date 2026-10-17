@@ -9,7 +9,9 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const SAVED_FILE = path.join(__dirname, 'previous-statusline.json');
+// setup.js writes it in the folder this copy runs from.
+const SAVED_NAME = 'previous-statusline.json';
+const SAVED_FILE = path.join(__dirname, SAVED_NAME);
 const TIMEOUT_MS = 3000;
 
 function savedCommand() {
@@ -62,4 +64,4 @@ function run(input, done) {
   start(false);
 }
 
-module.exports = { run };
+module.exports = { run, SAVED_NAME };

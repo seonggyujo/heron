@@ -1,7 +1,7 @@
 import type { ShellKind } from "../ipc/pty";
+import { pref } from "./prefs";
 
 // Shell names and the remembered default for the + button.
-// localStorage is a convenience only: any failure falls back.
 
 export const SHELL_LABELS: Record<ShellKind, string> = {
   pwsh: "pwsh",
@@ -10,23 +10,13 @@ export const SHELL_LABELS: Record<ShellKind, string> = {
   gitbash: "Git Bash",
 };
 
-const KEY = "heron.defaultShell";
+const shellKind = (raw: string) => (Object.keys(SHELL_LABELS).includes(raw) ? (raw as ShellKind) : undefined);
 
-/** The saved default if still installed, else the first installed shell. */
-export function loadDefaultShell(available: ShellKind[]): ShellKind {
-  try {
-    const saved = localStorage.getItem(KEY) as ShellKind | null;
-    if (saved && available.includes(saved)) return saved;
-  } catch {
-    /* storage unavailable */
-  }
-  return available[0] ?? "powershell";
-}
+/** The shell the user picked in the + button's menu, if any. */
+export const defaultShellPref = pref<ShellKind | null>("heron.defaultShell", null, shellKind);
 
-export function saveDefaultShell(shell: ShellKind): void {
-  try {
-    localStorage.setItem(KEY, shell);
-  } catch {
-    /* storage unavailable */
-  }
+/** The picked shell if still installed, else the first installed shell. */
+export function defaultShellOf(available: ShellKind[]): ShellKind {
+  const picked = defaultShellPref.get();
+  return picked && available.includes(picked) ? picked : (available[0] ?? "powershell");
 }
