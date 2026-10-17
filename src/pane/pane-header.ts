@@ -1,16 +1,26 @@
+import type { Doing } from "../agent/activity";
 import { span } from "../app/dom";
 import { formatUptime } from "../app/durations";
 import type { UptimeClock } from "../app/uptime-clock";
 import { onLangChange, t } from "../i18n/lang";
 
 // Pane header DOM: status dot, shell name, exit badge, current folder,
-// terminal title, uptime, close button. Status lives here, never inside the
-// terminal: the terminal shows only what the shell prints.
+// terminal title (while an agent works, what it does in its place), uptime,
+// close button. Status lives here, never inside the terminal: the terminal
+// shows only what the shell prints.
+
+/** What a working agent does now: its words, and the kind that colors the dot. */
+export interface PaneDoing {
+  text: string;
+  kind: Doing;
+}
 
 export interface PaneHeader {
   el: HTMLElement;
   /** Title set by the running program (OSC 0/2). */
   setTitle(title: string): void;
+  /** What the agent does now, shown in place of the title; null shows the title again. */
+  setDoing(doing: PaneDoing | null): void;
   /** Current folder reported by the shell. */
   setCwd(path: string): void;
   /** The shell started: count how long it runs, until it exits. */
@@ -37,6 +47,8 @@ export function createPaneHeader(shellLabel: string, clock: UptimeClock, onClose
   const exit = span("pane-exit");
   const cwd = span("pane-cwd");
   const title = span("pane-title");
+  // The dot and its kind colors come from the sidebar's (agent-activity.css).
+  const doing = span("pane-doing agent-doing");
   const uptime = span("pane-uptime");
 
   const close = document.createElement("button");
@@ -63,10 +75,17 @@ export function createPaneHeader(shellLabel: string, clock: UptimeClock, onClose
     stopUptime = null;
   };
 
-  el.append(dot, shell, exit, cwd, title, uptime, close);
+  el.append(dot, shell, exit, cwd, title, doing, uptime, close);
   return {
     el,
     setTitle: (text) => setText(title, text),
+    setDoing(next) {
+      el.classList.toggle("doing", next !== null);
+      if (!next) return;
+      const kind = `pane-doing agent-doing k-${next.kind}`;
+      if (doing.className !== kind) doing.className = kind;
+      setText(doing, next.text);
+    },
     setCwd: (path) => setText(cwd, path),
     startUptime() {
       const startedAt = Date.now();

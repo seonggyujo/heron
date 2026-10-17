@@ -12,12 +12,13 @@
 | 경로 | 역할 |
 | --- | --- |
 | `main.ts` | 부트스트랩만. 모듈을 만들고 서로 연결한다. 새 pane(+ 버튼, 빈 화면, Ctrl+Shift+T)은 Heron을 연 폴더("Open in Heron")에서, 없으면 home에서 |
-| `wire-agents.ts` | `main.ts`처럼 연결만: 에이전트 소식과 pane 신호를 에이전트 보드에 넣고, 보드가 바뀌면 에이전트가 있는 pane의 줄(번호, 폴더, 경로, 에이전트, 커밋하지 않은 변경량)을 만들어 사이드바, 하단바, pane 점(`pane-signals.ts`의 표시 함수)을 다시 그린다. 폴더 이름은 worktree면 "저장소 · 이름". 변경량은 `wire-changes.ts`가 git에 묻는다. 에이전트가 나를 기다리거나 끝나면 작업 표시줄 버튼을 깜빡인다(`ipc/attention.ts`). 사이드바 줄에 마우스를 올리면 그 pane 테두리를 밝힌다. 사이드바에 "새 에이전트"(`wire-new-agent.ts`)와 최근 세션(`wire-sessions.ts`)을 넣고, pane에서 돌고 있는 세션 id를 알려 주고, pty별 세션 id를 `wire-workspace.ts`에 준다. 시작할 때 Claude Code 훅 상태를 맞춘다(`app/agent-hooks.ts`) |
+| `wire-agents.ts` | `main.ts`처럼 연결만: 에이전트 소식과 pane 신호를 에이전트 보드에 넣고, 보드가 바뀌면 에이전트가 있는 pane의 줄(번호, 폴더, 경로, 에이전트, 커밋하지 않은 변경량)을 만들어 사이드바, 하단바, pane 점(`pane-signals.ts`의 표시 함수), pane 헤더의 하는 일, 작업 표시줄 막대와 숫자(`ui/taskbar-status.ts`)를 다시 그린다. 언어가 바뀌어도 다시 그린다. 폴더 이름은 worktree면 "저장소 · 이름". 변경량은 `wire-changes.ts`가 git에 묻는다. 에이전트가 나를 기다리거나 끝나면 작업 표시줄 버튼을 깜빡인다(`ipc/attention.ts`). 사이드바 줄에 마우스를 올리면 그 pane 테두리를 밝힌다. 사이드바에 "새 에이전트"(`wire-new-agent.ts`)와 최근 세션(`wire-sessions.ts`)을 넣고, pane에서 돌고 있는 세션 id를 알려 주고, pty별 세션 id를 `wire-workspace.ts`에 준다. 시작할 때 Claude Code 훅 상태를 맞춘다(`app/agent-hooks.ts`) |
 | `wire-new-agent.ts` | 연결만: 사이드바 맨 위 "새 에이전트". 기본 셸로 pane을 열고 첫 프롬프트에 `claude`를 친다. 버튼은 선택된 pane의 폴더에서, ▾ 메뉴는 최근 세션의 폴더(`agent/start-folders.ts`), git 저장소면 `claude --worktree`, 폴더 선택 창(`ipc/folders.ts`) |
 | `wire-sessions.ts` | 연결만: 사이드바의 최근 세션. 누르면 기본 셸로 마지막으로 돌던 폴더에 pane을 열고 `claude --resume <id>`를 친다(`app/claude-commands.ts`, id는 UUID 모양만). 세션 삭제(휴지통). 목록은 창이 포커스를 받을 때와 pane에서 세션이 끝날 때 다시 읽고(백엔드는 바뀐 파일만 읽는다), 달라졌을 때만 다시 그린다. pane에서 돌고 있는 세션은 뺀다. 읽은 목록은 새 에이전트 메뉴가 쓴다 |
 | `wire-changes.ts` | 에이전트 폴더가 마지막 커밋에서 얼마나 바뀌었는지 git에 묻고(`ipc/folders.ts`) 답을 보관한다. 에이전트 상태가 바뀔 때, 창이 포커스를 받을 때(10초 안에 물었으면 건너뜀), 작업 중이면 15초마다 다시 묻고, 답이 달라지면 다시 그리게 한다 |
 | `wire-workspace.ts` | 연결만: 지난 작업. 시작할 때(설정 > 지난 작업 다시 열기) 저장된 pane을 셸과 폴더 그대로 모두 놓고 사용자 배치를 되살린 다음, 셸을 한꺼번에 띄운다(셸마다 처음부터 제 크기로). Claude Code가 돌던 pane은 그 세션을 이어 열고, 이어 열 수 없으면(메시지가 없어 저장되지 않았거나 다른 곳에서 실행 중) 새 `claude`를 연다. 그다음 "Open in Heron" 폴더, 아무것도 없으면 home에 pane 하나. 실행 중에는 시계가 돌 때마다 지금 상태를 저장한다(바뀐 때만) |
 | `agent/agent-model.ts` | 순수 함수: pane 하나의 에이전트(`Agent`)와 그 상태(쉬는 중, 작업 중, 권한 필요, 질문, 입력 대기, 끝남), 작업 폴더, 세션 id(최근 세션에서 빼려고), 급한 순서, 상태별 색. 상태를 정하는 신호: Heron 훅이 쓴 상태(정확), 터미널 제목(`✳`은 쉬는 중, `◐◑`는 작업 중. 아무것도 설치하지 않아도 동작), pane의 키 입력과 포커스. 그 밖의 소식은 `agent-reports.ts`가 붙인다. 훅이 한 번 보고하면 훅이 상태를 정한다. 단 Esc나 Ctrl+C는 작업을 멈춘 것으로 본다(Claude Code는 중단된 턴에 Stop 훅을 보내지 않는다). 작업 표시줄을 깜빡일 변화인지도 여기서 정한다 |
+| `agent/taskbar-state.ts` | 순수 함수: 모든 에이전트 상태로 작업 표시줄 버튼에 보일 것. 하나라도 일하면 흐르는 막대, 하나라도 나를 기다리면(이쪽이 이긴다) 가득 찬 노란 막대, 일하는 에이전트 수 |
 | `agent/agent-reports.ts` | 순수 함수: 백엔드와 플러그인의 소식을 에이전트에 붙인다. heron-limits 플러그인의 컨텍스트 사용률, 실행 중인 서브에이전트, 백엔드의 모델 확인, 활동(`activity.ts`), 토큰(`tokens.ts`) |
 | `agent/usage.ts` | 순수 함수: heron-limits 플러그인의 상태 파일에서 계정의 사용 한도(5시간, 주간)와 컨텍스트 사용률, 막대 색(70%부터 노랑, 90%부터 빨강). 한도가 하나도 없는 상태 파일(새 세션의 첫 응답 전)은 한도로 치지 않아서 마지막 한도가 화면에 남는다. 쓴 시각만 다른 한도는 같은 것으로 본다 |
 | `agent/subagents.ts` | 순수 함수: 백엔드가 보낸 실행 중인 서브에이전트 목록(id, 종류, 시작 시각) |
@@ -66,7 +67,7 @@
 | `ui/agent-sidebar.ts` | 왼쪽 사이드바, 늘 보인다: 맨 위 "새 에이전트" 버튼, 에이전트가 있는 pane을 급한 순(나를 기다림, 끝남, 작업 중, 쉬는 중)으로(없으면 없다는 한 줄), 최근 세션, 맨 아래에 안내(`agent-hints.ts`). 버튼과 최근 세션은 `wire-sessions.ts`가 만들어 넘긴다. 번호 배지만 남게 접을 수 있고 기억한다. 줄은 보드가 바뀔 때만 새로 만들고, 1초 갱신은 경과 시간만 바꾼다 |
 | `ui/agent-hints.ts` | 사이드바 맨 아래 안내: 먼저 Heron의 Claude Code 훅 켜기 제안(못 켜면 이유), 훅이 켜지거나 제안을 닫으면 heron-limits 플러그인 안내. 각각 × 로 영영 닫는다 |
 | `ui/agent-item.ts` | 사이드바 한 줄: 상태 색 배지에 든 pane 번호, 폴더, 세션의 모델(`/model`로 바꾸면 다음 폴링에 따라 바뀐다), 경과 시간, 상태(권한 요청과 질문이면 무엇인지도. 작업 중이면 지금 하는 일), 이번 턴의 도구 블록, 토큰, 커밋하지 않은 줄 수(+12 −3), 모델 경고, 실행 중인 서브에이전트. 누르면 그 pane으로, 마우스를 올리면 그 pane 강조 |
-| `ui/agent-activity.ts` | 사이드바 줄의 활동: 작업 중이면 상태 대신 "main.ts 고치는 중"처럼 지금 하는 일(앞의 점은 종류 색), 그 아래 이번 턴의 도구를 종류 색 블록으로(실행 중인 것은 테두리), 툴팁에 최근 도구 |
+| `ui/agent-activity.ts` | 사이드바 줄의 활동: 작업 중이면 상태 대신 "main.ts 고치는 중"처럼 지금 하는 일(앞의 점은 종류 색), 그 아래 이번 턴의 도구를 종류 색 블록으로(실행 중인 것은 테두리), 툴팁에 최근 도구. 하는 일의 글(`doingText`)은 pane 헤더도 쓴다(`wire-agents.ts`가 넘긴다) |
 | `ui/agent-tokens.ts` | 사이드바 줄의 토큰: "토큰 1.24M · 이번 턴 38.2k", 툴팁에 세션과 이번 턴의 종류별 토큰 |
 | `ui/subagent-lines.ts` | 사이드바 줄 아래의 서브에이전트: "↳ 종류 실행 시간", 오래된 것부터 셋까지, 나머지는 "외 N개" |
 | `ui/new-agent-button.ts` | 사이드바 맨 위 split 버튼: "+ 새 에이전트"는 선택된 pane의 폴더 이름을 보여 주고 그 폴더의 새 pane에서 Claude Code를 시작, ▾는 폴더 메뉴. 접으면 "+"만 |
@@ -75,6 +76,7 @@
 | `ui/recent-group-head.ts` | 최근 세션의 폴더 머리: 화살표, 폴더 이름(worktree면 "저장소 · 이름"), 세션 수, 가장 최근 시각. 누르면 접고 편다 |
 | `ui/recent-session-row.ts` | 최근 세션 한 줄(폴더 머리 아래): 제목과 얼마 전. 마우스를 올리면 시간 대신 "이어 열기", 누르면 연다. 오른쪽 클릭하면 줄 위에 "삭제할까요? [삭제] [취소]"(휴지통으로)(Esc나 바깥 클릭은 취소), 실패하면 잠깐 이유를 보인다 |
 | `ui/usage-bar.ts` | 창 아래 하단바(heron-limits 플러그인): 한도 블록 두 개와 에이전트마다 컨텍스트 사용률 칩(pane 순서, 누르면 그 pane으로). 한도도 컨텍스트도 없으면 숨고, 한도가 있을 때만 1초 시계를 구독한다 |
+| `ui/taskbar-status.ts` | 작업 표시줄 버튼의 에이전트(`agent/taskbar-state.ts`): 일하면 흐르는 막대, 나를 기다리면 노란 막대, 아이콘 위에 일하는 수를 작업 중 색 동그라미로(캔버스에 화면 배율대로 그려 RGBA로). Windows가 그리므로 페이지에서 도는 애니메이션은 없다. 바뀐 것만, 앞의 호출이 끝난 뒤 차례로 보낸다. 처음엔 모름으로 시작해서 페이지를 다시 읽으면 남은 막대를 바로잡는다 |
 | `ui/limit-meter.ts` | 하단바의 한도 하나(5시간, 주간): 이름, 초기화까지 남은 시간, 큰 사용률 숫자와 막대. 70%부터 노랑, 90%부터 빨강 |
 | `i18n/en.ts` | 화면에 보이는 모든 글자의 영어 표와 그 키 타입(`Strings`). 셸 이름과 로그는 번역하지 않는다 |
 | `i18n/ko.ts` | 같은 키의 한국어 표 |
@@ -87,7 +89,7 @@
 | `ipc/agent-hooks.ts` | Claude Code 훅 명령(`agent_hooks_presence`, `install_agent_hooks`, `remove_agent_hooks`). 실패하면 오류 코드 |
 | `ipc/sessions.ts` | 최근 세션 목록(`recent_sessions`, 최신부터), 이어 열 수 있는 세션(`resumable_sessions`), 세션 삭제(`delete_session`, 휴지통으로). 실행 중인 세션과 폴더가 없어진 세션은 백엔드가 이미 뺀다 |
 | `ipc/folders.ts` | 폴더 명령: 커밋하지 않은 변경량(`git_changes`), git 저장소인지(`git_repos`), 폴더 선택 창(`pick_folder`) |
-| `ipc/attention.ts` | 작업 표시줄 깜빡임 명령(`flash_taskbar`) |
+| `ipc/attention.ts` | 작업 표시줄 버튼: 깜빡임 명령(`flash_taskbar`), 진행 막대(없음, 흐름, 멈춤)와 아이콘 위 그림(RGBA). 막대와 그림은 Tauri 창 API(`setProgressBar`, `setOverlayIcon`, 아래는 ITaskbarList3)로, 바꿀 때까지 남는다 |
 | `ipc/window-menu.ts` | 창의 시스템 메뉴 명령(`show_window_menu`): 타이틀바 우클릭이면 마우스 자리, Alt+Space면 창 모서리 |
 | `ipc/log.ts` | 프론트 로그 한 줄을 백엔드로(`frontend_log`. dev에서만 `app/log.ts`가 부른다) |
 | `terminal/terminal-view.ts` | xterm 생성, fit·webgl addon, context loss 시 DOM 렌더러로 fallback. 닫을 때 WebGL 컨텍스트를 바로 놓아 준다(addon은 놓지 않아서 많이 열고 닫으면 페이지의 컨텍스트 한도에 닿는다). 더블클릭 단어 구분자는 heron-c와 같게(괄호, 따옴표, `<>`, `;`, `|`) |
@@ -98,14 +100,14 @@
 | `terminal/links.ts` | 출력 속 URL과 OSC 8 링크를 Ctrl+클릭으로 브라우저에서 열기(opener 플러그인, http/https만. 앱이 마우스 추적 중이어도 링크 위 Ctrl+클릭은 앱에 넘기지 않음) |
 | `terminal/cwd.ts` | 셸이 보내는 현재 폴더 신호(OSC 9;9, OSC 7) 해석. 신호는 프롬프트마다 오므로 "프롬프트로 돌아옴"도 알린다. 새 폴더를 먼저 알리고 프롬프트를 알려서, 프롬프트를 듣는 쪽이 새 폴더를 읽는다 |
 | `pane/pane-item.ts` | 배치와 끌기가 pane(`pane.ts`)에 요구하는 것. 이 모듈들이 터미널에 직접 기대지 않게 한다 |
-| `pane/pane.ts` | 터미널 pane 하나: 틀(`pane-frame.ts`), TerminalView, PtyLink, 글로우, 터미널 속 왜가리(`pane-herons.ts`)를 묶는다. 에이전트 상태 색, 셸의 현재 폴더 경로와 이름, 첫 프롬프트에 칠 명령(`start-command.ts`) |
+| `pane/pane.ts` | 터미널 pane 하나: 틀(`pane-frame.ts`), TerminalView, PtyLink, 글로우, 터미널 속 왜가리(`pane-herons.ts`)를 묶는다. 에이전트 상태 색, 일하는 에이전트가 하는 일(헤더), 셸의 현재 폴더 경로와 이름, 첫 프롬프트에 칠 명령(`start-command.ts`) |
 | `pane/pane-frame.ts` | pane의 DOM: 헤더와 터미널이 그려질 상자를 담은 section. 헤더를 누르면 글자 선택 없이 그 pane에 포커스 |
 | `pane/start-command.ts` | 새 pane의 셸이 처음 프롬프트를 띄우면 명령을 사용자가 친 것처럼 입력한다(`claude`, `claude --resume <id>`). Heron이 띄우는 셸은 모두 프롬프트를 알려서(`pty/cwd_report.rs`) 셸 시작과 엇갈리지 않는다 |
 | `pane/pane-signals.ts` | 터미널 제목과 폴더를 헤더에, 신호(제목, 프롬프트, 키 입력과 그 키가 단독 Esc나 Ctrl+C인지, 포커스, 닫힘)를 에이전트 보드로. 에이전트 상태에 따른 점 색과 사이드바에서 가리킬 때의 테두리 class |
 | `pane/shell-exits.ts` | 셸 종료 처리: exit 0이면 pane 닫기(설정으로 끌 수 있음), 실패면 남기고 뱃지 |
 | `pane/pane-counts.ts` | 타이틀바 개수와 빈 화면용 숫자(터미널, 실행 중) |
 | `pane/pty-link.ts` | TerminalView와 백엔드 PTY 연결: 출력, 입력, 크기, kill. 셸이 아직 도는지(시작했고 끝나지 않음)도 안다 |
-| `pane/pane-header.ts` | 헤더 DOM: 상태 점, 셸 이름, exit 뱃지, 폴더, 터미널 제목, 실행 시간(시계 구독, 셸이 끝나면 멈춤), 닫기 |
+| `pane/pane-header.ts` | 헤더 DOM: 상태 점, 셸 이름, exit 뱃지, 폴더, 터미널 제목(에이전트가 일하는 동안은 그 자리에 하는 일과 종류 색 점), 실행 시간(시계 구독, 셸이 끝나면 멈춤), 닫기 |
 | `pane/pane-motion.ts` | pane 등장·퇴장 애니메이션 |
 | `pane/output-glow.ts` | 출력 시 테두리 글로우(0.3초)와 상태 점 pulse(3초). 조용한 셸에는 도는 애니메이션이 없다. pane당 최대 150ms에 한 번 class 토글 |
 | `pane/pane-herons.ts` | 터미널 속 왜가리: pane의 터미널 위 캔버스. 에이전트가 있는 동안 설정한 수만큼(`buddy/flock.ts`) 움직이고 그린다. 움직이는 것이 있을 때만 프레임을 돌고, 1초 시계와 터미널 렌더가 깨운다(글자가 왜가리를 덮었을 수 있어서). 설정 > 애니메이션을 끄면 없고, 창이 숨으면 멈춘다 |
@@ -137,7 +139,7 @@
 | `layout/fit-scheduler.ts` | ResizeObserver + requestAnimationFrame으로 fit을 묶음. 프레임당 10ms 예산, 남으면 다음 프레임 |
 | `layout/flip.ts` | 재배치 시 이전 위치에서 새 위치로 transform 애니메이션 |
 | `styles/stylesheets.ts` | 앱의 모든 스타일시트를 캐스케이드 순서대로 import(xterm, 테마 토큰과 기본 규칙, 기능별 파일) |
-| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히), `pane`(왜가리 캔버스 층 포함), `split`(경계선, 드롭 미리보기), `settings`, `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄, 모델, 변경량), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 블록, 컨텍스트 칩), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
+| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히), `pane`(헤더의 제목과 하는 일, 왜가리 캔버스 층 포함), `split`(경계선, 드롭 미리보기), `settings`, `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄, 모델, 변경량), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 블록, 컨텍스트 칩), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
 
 의존 방향: `main.ts`, `wire-*.ts` → `ui/`, `pane/`, `layout/` → `buddy/` → `agent/`, `terminal/`, `ipc/`, `app/`, `i18n/`. (`ui/`, `pane/`, `layout/`은 `buddy/` 아래 모듈도 바로 쓴다.)
 `wire-*.ts`끼리는 `wire-agents.ts` → `wire-changes.ts`만 있다. 나머지는 `main.ts`가 서로의 함수를 넘겨 잇는다.
@@ -250,7 +252,7 @@ Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍�
   `trace`는 출력 flush마다 한 줄을 찍으니 필요할 때만 쓴다.
   PowerShell: `$env:HERON_LOG = "trace"; npm run tauri:dev`
 - 출력 청크마다 찍는 로그는 trace에만 둔다. 다른 레벨에서 hot path 로그 금지.
-- 기본(debug)에서 나오는 것: 셸 시작·종료·크기, 현재 폴더 변화(`[cwd]`), 배치 변화, 막힌 링크, 설정 변경(`[settings]`), 막힌 브라우저 단축키(`[keys]`), 다음 프레임으로 밀린 fit(`[fit]`), 에이전트 파일 변화(`agent:`), 작업 표시줄 깜빡임(`attention:`).
+- 기본(debug)에서 나오는 것: 셸 시작·종료·크기, 현재 폴더 변화(`[cwd]`), 배치 변화, 막힌 링크, 설정 변경(`[settings]`), 막힌 브라우저 단축키(`[keys]`), 다음 프레임으로 밀린 fit(`[fit]`), 에이전트 파일 변화(`agent:`), 작업 표시줄 깜빡임(`attention:`), 작업 표시줄 막대와 숫자(`taskbar:`).
 - `trace`에서만 나오는 것: 출력 flush.
 
 ## 설정

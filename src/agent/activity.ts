@@ -59,6 +59,8 @@ export function toolLabel(tool: string): string {
   return tool.startsWith("mcp__") ? tool.slice(tool.lastIndexOf("__") + 2) : tool;
 }
 
+export function doingOf(step: Step): Doing;
+export function doingOf(step: Step | null): Doing | null;
 export function doingOf(step: Step | null): Doing | null {
   if (!step) return null;
   if (step.kind === "tool") return toolKind(step.tool);

@@ -1,24 +1,31 @@
+import { doingOf } from "./agent/activity";
 import { AgentBoard } from "./agent/agent-board";
-import { markOf, wantsAttention } from "./agent/agent-model";
+import { markOf, wantsAttention, type Agent } from "./agent/agent-model";
 import { syncAgentHooks } from "./app/agent-hooks";
 import { createLogger } from "./app/log";
 import { folderLabel } from "./app/paths";
 import type { UptimeClock } from "./app/uptime-clock";
+import { onLangChange } from "./i18n/lang";
 import { onAgentUpdate } from "./ipc/agent";
 import { flashTaskbar } from "./ipc/attention";
+import type { PaneDoing } from "./pane/pane-header";
 import type { PaneManager } from "./pane/pane-manager";
 import { markAgent, markHover, type PaneSignal } from "./pane/pane-signals";
+import { doingText } from "./ui/agent-activity";
 import type { AgentRow } from "./ui/agent-item";
 import { createAgentSidebar, type SidebarParts } from "./ui/agent-sidebar";
+import { createTaskbarStatus } from "./ui/taskbar-status";
 import { createUsageBar } from "./ui/usage-bar";
 import { ChangeWatch } from "./wire-changes";
 
 // Wiring only, like main.ts: agent updates and pane signals go into the
 // agent board; every change of the board redraws the sidebar (with each
 // folder's uncommitted changes from wire-changes.ts), the usage bar, the
-// pane dots and the panes' terminal herons, and an agent that needs the user or finishes flashes the
-// taskbar button. The sidebar also holds the "New agent" button and the
-// recent sessions, which hear which sessions run in panes.
+// pane dots, the panes' headers (what a working agent does) and terminal
+// herons, and the taskbar button's bar and number. An agent that needs the
+// user or finishes flashes the taskbar button. The sidebar also holds the
+// "New agent" button and the recent sessions, which hear which sessions run
+// in panes.
 
 const log = createLogger("attention");
 
@@ -34,6 +41,12 @@ export interface AgentWiring {
   sessionOf(pty: number): string | null;
   /** Starts listening to the agent files and checks Heron's Claude Code hooks. */
   start(): Promise<void>;
+}
+
+/** What a working agent does now, for its pane's header. */
+function doingFor(agent: Agent | undefined): PaneDoing | null {
+  const step = agent?.state === "working" ? agent.activity?.step : null;
+  return step ? { text: doingText(step), kind: doingOf(step) } : null;
 }
 
 /**
@@ -64,6 +77,7 @@ export function wireAgents(
     parts,
   );
   const usageBar = createUsageBar(clock, pick);
+  const taskbar = createTaskbarStatus();
   const changes = new ChangeWatch(clock, () => refresh());
 
   const refresh = () => {
@@ -78,12 +92,13 @@ export function wireAgents(
     });
     sidebar.render(rows, board.pluginSeen);
     usageBar.render(rows, board.limits);
+    taskbar.render(rows.map((r) => r.agent.state));
     changes.watch(rows.flatMap((r) => (r.path ? [{ pty: r.pty, folder: r.path, state: r.agent.state }] : [])));
     onRunning(rows.flatMap((r) => (r.agent.sessionId ? [r.agent.sessionId] : [])));
     for (const p of terminals) {
       const agent = p.id === null ? undefined : board.get(p.id);
       markAgent(p.el, agent ? markOf(agent.state) : null);
-      p.showAgent(agent ?? null);
+      p.showAgent(agent ?? null, doingFor(agent));
     }
   };
   board.subscribe((change) => {
@@ -91,6 +106,8 @@ export function wireAgents(
     if (!wantsAttention(change.from, change.to)) return;
     flashTaskbar().catch((err) => log.warn("taskbar flash failed", err));
   });
+  // The headers' words follow the language.
+  onLangChange(refresh);
 
   return {
     sidebar: sidebar.el,

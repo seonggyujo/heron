@@ -7,7 +7,7 @@ import type { ShellKind } from "../ipc/pty";
 import { TerminalView } from "../terminal/terminal-view";
 import { OutputGlow } from "./output-glow";
 import { createPaneFrame } from "./pane-frame";
-import type { PaneHeader } from "./pane-header";
+import type { PaneDoing, PaneHeader } from "./pane-header";
 import { PaneHerons } from "./pane-herons";
 import type { PaneItem } from "./pane-item";
 import { animateEnter, animateLeave } from "./pane-motion";
@@ -113,9 +113,10 @@ export class Pane implements PaneItem {
     this.view.setFontSize(px);
   }
 
-  /** The coding agent in this pane, null for none: its herons act it out. */
-  showAgent(agent: Agent | null): void {
+  /** The coding agent in this pane, null for none: its herons act it out, the header says what it does. */
+  showAgent(agent: Agent | null, doing: PaneDoing | null): void {
     this.herons.show(agent);
+    this.header.setDoing(doing);
   }
 
   setFocused(focused: boolean): void {

@@ -30,7 +30,9 @@ The sidebar on the left has a row for each pane that runs a coding agent: the pa
 (working, with a timer, or done). When the folder is a git repository, the row also counts the
 lines not committed yet (`+12 −3`). Agents that need you come first. Click a row to jump to that pane, or point at it to see which pane
 it is; the pane's status dot takes the same color. While Heron is behind another window, its
-taskbar button flashes when an agent finishes or needs you. The sidebar folds into a narrow rail of
+taskbar button flashes when an agent finishes or needs you, and keeps a moving bar while agents work
+(a full yellow one while one needs you) with the number working over the icon. While an agent works,
+its pane's header says what it does in place of the title. The sidebar folds into a narrow rail of
 badges. This needs nothing else: Heron reads the title Claude Code gives the terminal, and asks git.
 
 **New agent** at the top of the sidebar opens a pane in the selected pane's folder and starts Claude

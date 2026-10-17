@@ -60,14 +60,25 @@
   opacity: 0.8;
 }
 
-/* Program-set title: takes the free space, cut with an ellipsis. */
-.pane-title {
+/* Program-set title, or what a working agent does in its place (its dot
+   and kind colors in agent-activity.css): takes the free space, cut with an
+   ellipsis. */
+.pane-title,
+.pane-doing {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.pane-title {
   color: var(--fg-dim);
+}
+
+.pane-header:not(.doing) .pane-doing,
+.pane-header.doing .pane-title {
+  display: none;
 }
 
 .pane-cwd:not(:empty) + .pane-title:not(:empty)::before {

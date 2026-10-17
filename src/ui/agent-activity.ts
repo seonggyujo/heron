@@ -7,13 +7,14 @@ import { t } from "../i18n/lang";
 //                             color of what it does
 //   ▪▪▪▪▪▪▫                   this turn's tools, one block each, colored by
 //                             kind; a tool still running is outlined
-// The row's tooltip lists the last tools.
+// The row's tooltip lists the last tools. The pane header says the same
+// words (doingText, through wire-agents.ts).
 
 const BLOCKS_MAX = 24;
 const TIPS_MAX = 8;
 
 /** The words for a step: "thinking", "editing main.ts". */
-function doingText(step: Step): string {
+export function doingText(step: Step): string {
   const s = t();
   if (step.kind !== "tool") return step.kind === "thinking" ? s.doingThink : s.doingWrite;
   const what = step.target ?? toolLabel(step.tool);

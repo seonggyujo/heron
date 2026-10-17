@@ -11,6 +11,10 @@
     "core:window:allow-start-dragging",
     "core:window:allow-internal-toggle-maximize",
     "core:window:allow-is-minimized",
+    "core:window:allow-set-progress-bar",
+    "core:window:allow-set-overlay-icon",
+    "core:image:allow-new",
+    "core:resources:allow-close",
     {
       "identifier": "opener:allow-open-url",
       "allow": [{ "url": "https://*" }, { "url": "http://*" }]
