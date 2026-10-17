@@ -5,12 +5,12 @@
 <h1 align="center">Heron</h1>
 
 <p align="center">
-  A lightweight Windows terminal for running coding agents side by side. Press <b>+</b> and the panes arrange themselves; a sidebar shows what each Claude Code is doing, and the taskbar flashes when one needs you.
+  A lightweight Windows terminal made for <b>Claude Code</b>: run several sessions side by side. Press <b>+</b> and the panes arrange themselves; a sidebar shows what each Claude Code is doing and how many tokens it used, and the taskbar flashes when one needs you.
   <br>
   <b>English</b> · <a href="README.ko.md">한국어</a>
 </p>
 
-![Three Claude Code sessions in Heron: the sidebar shows one waiting for permission, one done and one working](docs/media/agents.png)
+![Three Claude Code sessions in Heron get a prompt each: the sidebar follows them until one works, one waits for permission and one is done, while the pixel herons act it out](docs/media/agents.gif)
 
 ---
 

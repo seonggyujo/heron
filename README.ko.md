@@ -5,12 +5,12 @@
 <h1 align="center">Heron</h1>
 
 <p align="center">
-  코딩 에이전트를 나란히 띄우는 가벼운 Windows 터미널. <b>+</b>만 누르면 알아서 화면을 나누고, 사이드바에 Claude Code마다 지금 무엇을 하는지 보여 주고, 나를 기다리는 에이전트가 있으면 작업 표시줄이 깜빡여요.
+  <b>Claude Code</b>용 가벼운 Windows 터미널. 세션 여러 개를 나란히 띄워요. <b>+</b>만 누르면 알아서 화면을 나누고, 사이드바에 Claude Code마다 지금 무엇을 하는지와 쓴 토큰을 보여 주고, 나를 기다리는 에이전트가 있으면 작업 표시줄이 깜빡여요.
   <br>
   <a href="README.md">English</a> · <b>한국어</b>
 </p>
 
-![Heron 안의 Claude Code 세 개: 사이드바에 권한을 기다리는 것, 끝난 것, 작업 중인 것이 보여요](docs/media/agents.ko.png)
+![Heron 안의 Claude Code 세 개에 요청을 하나씩 보내요. 사이드바가 따라가다 하나는 작업 중, 하나는 권한 대기, 하나는 끝남이 되고, 픽셀 왜가리가 그 모습을 흉내 내요](docs/media/agents.ko.gif)
 
 ---
 

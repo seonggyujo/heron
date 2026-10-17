@@ -1,48 +1,58 @@
 # Demo GIFs
 
-Scripts that drive Heron with synthetic mouse and keyboard input,
-record five scenes with ffmpeg at 60 fps, and turn them into the GIFs in
-`docs/media/` used by the READMEs: 50 fps at the recorded width. 50 is the
-most a GIF can do; browsers slow shorter frame delays down to 1/10 s.
+Scripts that start a dev build of Heron, drive it and film it through its
+DevTools port (CDP), and turn the recordings into the GIFs in `docs/media/`
+used by the READMEs. Nothing touches Windows' own mouse or keyboard and the
+window never takes focus, so the PC stays usable while they run.
 
 | File | Role |
 | --- | --- |
-| `record.ps1` | Positions the window, runs the scenes, records `rec\<scene>.mkv` |
-| `scenes.ps1` | What each scene does and how long it records |
-| `layout.ps1` | Screen coordinates of the title bar controls and panes |
-| `ui.ps1` | SendInput mouse/keyboard driver with a focus guard |
-| `make-gifs.ps1` | `rec\*.mkv` to `docs\media\*.gif` (50 fps, recorded width, 256 colors) |
-| `common.ps1` | Paths and ffmpeg lookup |
+| `record.js` | Entry: starts the app, runs the scenes, films each into `rec/<scene>/` |
+| `make-gifs.js` | `rec/<scene>/` to `docs/media/<scene>.gif` (50 fps, page size, 256 colors) |
+| `scenes.js` | The terminal scenes: `split`, `arrange`, `shells`, `activity`, `settings` |
+| `agents.js` | The first GIF of the READMEs, `agents` and `agents.ko`: three real Claude Code sessions |
+| `stage.js` | What scenes do to the app (panes, shell menu, sidebar, language), found by page elements |
+| `input.js` | Mouse and keyboard through CDP, with a drawn pointer |
+| `capture.js` | Screencast frames to PNG files with their times |
+| `app.js` | Starts and stops the dev build: own identifier, DevTools port, no focus, empty Claude Code config |
+| `cdp.js` | A small DevTools Protocol client |
+| `paths.js` | Folders, and where ffmpeg is |
 
 ## Use
 
 ```powershell
-winget install Gyan.FFmpeg                              # once
-npm run tauri:dev                                       # start a dev build
-.\scripts\demo\record.ps1 -Panes 1                      # current pane count
-.\scripts\demo\make-gifs.ps1
+winget install Gyan.FFmpeg                # once
+node scripts/demo/record.js               # every scene, a few minutes
+node scripts/demo/record.js split,settings
+node scripts/demo/make-gifs.js            # every recorded scene
 ```
 
-The scripts only drive a Heron built from this repo (`-Exe`, default
-`*\src-tauri\target\*\heron.exe`), never an installed copy. Use the
-dev build while an installed Heron runs: a release build would hand
-itself over to the installed one (single instance). `record.ps1` starts
-with Settings > Reset, so that build's settings go back to their defaults.
+`record.js` starts the dev build itself (`npx tauri dev` with its own
+identifier, `io.github.seonggyujo.heron.demo`) and stops it at the end. An
+installed Heron keeps running untouched: the two never share settings or the
+single-instance lock. Every run starts from default settings.
 
-Do not touch the mouse or keyboard while `record.ps1` runs (about 2 min).
-To abort, click any other window: every input first checks that Heron
-is the foreground window and the script stops if it is not.
+The app runs with an empty Claude Code config folder (`CLAUDE_CONFIG_DIR`),
+so its sidebar shows none of your own sessions.
 
-Record only some scenes with `-Only split,settings`. Scenes that continue
-from an earlier one (`activity`, `settings`) expect its end state; see the
-top of `scenes.ps1`.
+## The agents GIFs
+
+`agents` and `agents.ko` (Korean UI) start Claude Code in three panes, in
+folders under `~/demo` that the script makes, and give each a tiny prompt on
+Haiku. The sessions run as you: the panes drop `CLAUDE_CONFIG_DIR`, so they
+use your login, your hooks (Heron's Claude Code hooks must be on for the
+activity and tokens) and the heron-limits plugin if you have it. Recording
+both uses a little of your plan's usage, and the sessions stay in your
+Claude Code history.
+
+`web-client` starts with `--permission-mode default` so that it waits for
+permission; the other two run in your default mode. If yours asks about the
+ping, the script allows it.
 
 ## When the UI changes
 
-Coordinates in `layout.ps1` are for the fixed window size set by
-`record.ps1`. After changing the title bar, capture the window, measure the
-new centers of the controls and update `$Target` and `$Settings` (the
-settings panel opens right-aligned under the gear). Pane positions are
-computed from the grid rules and only need `$Workspace` to stay correct.
+The scenes find buttons by their classes and text (`stage.js`), not by
+coordinates, so most UI changes need nothing. A renamed class or label shows
+up as an error naming what was not found.
 
-Recordings go to `scripts\demo\rec\`, which git ignores.
+Recordings go to `scripts/demo/rec/`, which git ignores.

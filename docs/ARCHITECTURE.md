@@ -237,7 +237,7 @@ Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍�
 
 | 경로 | 역할 |
 | --- | --- |
-| `demo/` | README GIF 녹화. SendInput으로 앱을 조작하고 ffmpeg로 녹화, GIF 변환. 사용법은 `scripts/demo/README.md` |
+| `demo/` | README GIF 녹화(node). 개발 빌드를 따로 띄워(자체 identifier, 빈 Claude Code 설정 폴더) DevTools 포트(CDP)로만 조작하고 화면을 받아 ffmpeg로 GIF를 만든다. 실제 마우스와 키보드를 쓰지 않아 녹화 중에도 PC를 쓸 수 있다. 맨 위 GIF는 실제 Claude Code 세션 세 개(Haiku). 사용법은 `scripts/demo/README.md` |
 | `installer/make-images.ps1` | 설치 창 이미지(NSIS 사이드바·헤더, MSI 배경·배너)를 `src-tauri/icons/icon.png`로 그려 `src-tauri/installer/`에 저장. 아이콘을 바꾸면 다시 실행 |
 
 ## 로그
