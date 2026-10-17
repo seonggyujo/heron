@@ -1,6 +1,6 @@
 [package]
 name = "heron"
-version = "0.5.0"
+version = "0.6.0"
 description = "Green multi-pane terminal"
 authors = ["seonggyujo"]
 license = "MIT"
