@@ -115,3 +115,11 @@
   background: #3a1616;
   color: #ff8f8f;
 }
+
+/* The terminal herons (pane/pane-herons.ts): a canvas over the terminal's
+   cells, above xterm's own canvases and below its helpers (z-index 5).
+   Clicks and selection go through to the terminal. */
+.pane-herons {
+  z-index: 4;
+  pointer-events: none;
+}

@@ -1,11 +1,9 @@
-import { invoke } from "@tauri-apps/api/core";
+import { forwardLog, type LogLevel } from "../ipc/log";
 
 // Scoped logger. In dev every line goes to the DevTools console and is also
 // forwarded to the `tauri dev` terminal. In production only warn and error
 // reach the console, and nothing is sent over IPC.
 // Never log per output chunk: that is the hot path.
-
-type Level = "error" | "warn" | "info" | "debug";
 
 export interface Logger {
   error(...args: unknown[]): void;
@@ -22,11 +20,11 @@ function format(args: unknown[]): string {
     .join(" ");
 }
 
-function emit(level: Level, scope: string, args: unknown[]): void {
+function emit(level: LogLevel, scope: string, args: unknown[]): void {
   if (!DEV && (level === "info" || level === "debug")) return;
   console[level](`%c[${scope}]`, "color:#5fae7f", ...args);
   if (DEV) {
-    invoke("frontend_log", { level, scope, message: format(args) }).catch(() => {});
+    forwardLog(level, scope, format(args)).catch(() => {});
   }
 }
 

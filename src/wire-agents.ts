@@ -15,8 +15,8 @@ import { ChangeWatch } from "./wire-changes";
 
 // Wiring only, like main.ts: agent updates and pane signals go into the
 // agent board; every change of the board redraws the sidebar (with each
-// folder's uncommitted changes from wire-changes.ts), the usage bar and the
-// pane dots, and an agent that needs the user or finishes flashes the
+// folder's uncommitted changes from wire-changes.ts), the usage bar, the
+// pane dots and the panes' terminal herons, and an agent that needs the user or finishes flashes the
 // taskbar button. The sidebar also holds the "New agent" button and the
 // recent sessions, which hear which sessions run in panes.
 
@@ -83,6 +83,7 @@ export function wireAgents(
     for (const p of terminals) {
       const agent = p.id === null ? undefined : board.get(p.id);
       markAgent(p.el, agent ? markOf(agent.state) : null);
+      p.showAgent(agent ?? null);
     }
   };
   board.subscribe((change) => {

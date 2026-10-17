@@ -4,6 +4,8 @@
 
 use serde_json::{json, Value};
 
+use crate::text::ellipsize;
+
 /// What a hook event does to the pane's subagent files.
 #[derive(Debug, PartialEq)]
 pub enum SubagentChange {
@@ -116,11 +118,7 @@ fn message_of(input: &Value) -> Option<String> {
 }
 
 fn shorten(text: &str) -> String {
-    let line = text.lines().next().unwrap_or_default();
-    if line.chars().count() <= DETAIL_CHARS {
-        return line.to_owned();
-    }
-    line.chars().take(DETAIL_CHARS).chain(['…']).collect()
+    ellipsize(text.lines().next().unwrap_or_default(), DETAIL_CHARS)
 }
 
 #[cfg(test)]

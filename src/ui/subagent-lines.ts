@@ -1,5 +1,6 @@
 import type { Subagent } from "../agent/subagents";
-import { formatUptime } from "../app/uptime-clock";
+import { span } from "../app/dom";
+import { formatUptime } from "../app/durations";
 import { t } from "../i18n/lang";
 
 // The subagents under an agent's row in the sidebar, oldest first:
@@ -13,13 +14,6 @@ export interface SubagentLines {
   /** Null when no subagent runs. */
   el: HTMLElement | null;
   tick(now: number): void;
-}
-
-function span(className: string, text = ""): HTMLSpanElement {
-  const el = document.createElement("span");
-  el.className = className;
-  el.textContent = text;
-  return el;
 }
 
 export function createSubagentLines(subagents: readonly Subagent[]): SubagentLines {

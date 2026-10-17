@@ -42,7 +42,9 @@
 
 /* Status dot: pulses only while output is arriving (`active`, set by
    pane/output-glow.ts). A running infinite animation makes the WebView
-   draw every frame, so an always-on pulse would cost CPU while idle. */
+   draw every frame, so an always-on pulse would cost CPU while idle. Not
+   while a coding agent works: its spinner keeps the output coming the whole
+   turn, and the dot's color (agent-marks.css) already says it works. */
 @keyframes dot-pulse {
   0%,
   100% {
@@ -53,7 +55,7 @@
   }
 }
 
-.pane.active:not(.exited) .pane-dot {
+.pane.active:not(.exited):not(.agent-work) .pane-dot {
   animation: dot-pulse 1.2s ease-in-out infinite;
 }
 

@@ -7,13 +7,14 @@
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use serde_json::Value;
 
 use super::records::{model_record, state_record, subagent_change, SubagentChange};
 use super::write_atomic;
 use crate::agent::{is_pane_key, is_subagent_id, pane_file, remove_subagents, subagent_path, FileKind};
+use crate::epoch;
 
 /// A permission notification follows its request within moments.
 const RECENT: Duration = Duration::from_secs(30);
@@ -34,7 +35,7 @@ pub fn run() -> i32 {
     if let Some(record) = model_record(&input) {
         let _ = write_atomic(&pane_file(&dir, &pane, FileKind::Model), &record.to_string());
     }
-    match subagent_change(&input, now_ms()) {
+    match subagent_change(&input, epoch::now_millis()) {
         Some(SubagentChange::Start { id, record }) if is_subagent_id(&id) => {
             let _ = write_atomic(&subagent_path(&dir, &pane, &id), &record.to_string());
         }
@@ -45,10 +46,6 @@ pub fn run() -> i32 {
         _ => {}
     }
     0
-}
-
-fn now_ms() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
 }
 
 /// The pane's state record when it was written within RECENT, so a record of

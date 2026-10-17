@@ -1,6 +1,6 @@
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import type { PaneItem as Pane } from "../pane/pane-item";
-import { createLogger } from "./log";
+import { createLogger } from "../app/log";
+import type { PaneItem as Pane } from "./pane-item";
 
 // Dropping files on a pane types their paths into it, like Windows
 // Terminal: quoted when needed, separated by spaces. Tools such as CLI

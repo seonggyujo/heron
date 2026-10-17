@@ -6,7 +6,9 @@ import { createLogger } from "../app/log";
 //                   (goes to the app instead when it tracks the mouse;
 //                   Shift+right-click still copies or pastes)
 //   Ctrl+C       -> copy if text is selected, otherwise ^C to the shell
-//   Ctrl+V       -> paste (browser paste event, handled by xterm)
+//   Ctrl+V       -> paste (the browser's paste event, taken before xterm)
+// Every paste goes through pasteInto: in a bracketed paste ESC is dropped,
+// so pasted text cannot end the bracket early and run as typed keys.
 
 const log = createLogger("clipboard");
 
@@ -18,11 +20,29 @@ export function copySelection(term: Terminal): boolean {
   return true;
 }
 
+/** Types `text` in as a paste; term.paste brackets it when the shell asked for that. */
+export function pasteInto(term: Terminal, text: string): void {
+  term.paste(term.modes.bracketedPasteMode ? text.replace(/\x1b/g, "") : text);
+}
+
+/** The browser's paste (Ctrl+V) goes through pasteInto instead of xterm's own handler. */
+export function attachPaste(term: Terminal, host: HTMLElement): void {
+  host.addEventListener(
+    "paste",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const text = e.clipboardData?.getData("text/plain");
+      if (text) pasteInto(term, text);
+    },
+    { capture: true },
+  );
+}
+
 async function pasteClipboard(term: Terminal): Promise<void> {
   try {
     const text = await navigator.clipboard.readText();
-    // term.paste applies bracketed paste mode when the shell enabled it.
-    if (text) term.paste(text);
+    if (text) pasteInto(term, text);
   } catch (err) {
     log.warn("paste failed", err);
   }

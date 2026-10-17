@@ -30,13 +30,13 @@ export function createUsageBar(clock: UptimeClock, onPick: (pty: number) => void
 
   let rows: AgentRow[] = [];
   let limits: Limits | null = null;
-  let stopClock: (() => void) | null = null;
 
   // Every second while limits show: the time until each one resets.
   const tick = (now: number) => {
     fiveHour.show(limits?.fiveHour ?? null, now / 1000);
     sevenDay.show(limits?.sevenDay ?? null, now / 1000);
   };
+  const ticking = clock.switchFor(tick);
 
   const draw = () => {
     const withContext = rows.filter((r) => r.agent.context !== null).sort((a, b) => a.number - b.number);
@@ -45,11 +45,7 @@ export function createUsageBar(clock: UptimeClock, onPick: (pty: number) => void
     context.hidden = withContext.length === 0;
     el.hidden = limits === null && withContext.length === 0;
     tick(Date.now());
-    if (limits && !stopClock) stopClock = clock.subscribe(tick);
-    else if (!limits && stopClock) {
-      stopClock();
-      stopClock = null;
-    }
+    ticking(limits !== null);
   };
   onLangChange(draw);
 

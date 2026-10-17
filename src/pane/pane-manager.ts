@@ -1,21 +1,30 @@
 import { createLogger } from "../app/log";
 import type { UptimeClock } from "../app/uptime-clock";
 import type { ShellKind } from "../ipc/pty";
-import { Pane } from "./pane";
+import { Pane, type PaneOptions } from "./pane";
 import { PaneArranger } from "./pane-arranger";
 import { countPanes, type PaneCounts } from "./pane-counts";
-import type { PaneCallbacks, PaneItem } from "./pane-item";
+import { PaneFocus } from "./pane-focus";
+import type { PaneItem } from "./pane-item";
 import type { PaneSignal } from "./pane-signals";
 import { watchShellExits } from "./shell-exits";
 
-// Owns the list of terminal panes: add, close, focus, font size. Where
-// each pane sits, and how it moves there, is up to PaneArranger.
+// Owns the list of terminal panes: add, close, font size. Which one is
+// selected is PaneFocus; where each pane sits, and how it moves there, is
+// up to PaneArranger.
 
 const log = createLogger("panes");
 
+/** A pane to open: its shell, folder (null = home) and a command to type at the first prompt. */
+export interface PaneSpec {
+  shell: ShellKind;
+  cwd: string | null;
+  run?: string;
+}
+
 export class PaneManager {
-  private panes: PaneItem[] = [];
-  private focused: PaneItem | null = null;
+  private panes: Pane[] = [];
+  private readonly focus = new PaneFocus((pane) => this.signal(pane, { kind: "focus" }));
   private readonly arranger: PaneArranger;
 
   constructor(
@@ -42,23 +51,39 @@ export class PaneManager {
 
   /** `run`: a command to type at the shell's first prompt. */
   async add(shell: ShellKind, cwd: string | null = null, run?: string): Promise<Pane> {
-    const onSignal = (p: Pane, s: PaneSignal) => this.signal(p, s);
-    const pane = this.insert(
-      (cb) => new Pane(this.workspace, { shell, cwd, fontSize: this.fontSize, clock: this.clock, onSignal, run, ...cb }),
-    );
-    log.info(`added ${shell}, ${this.panes.length} panes`);
-    await pane.start();
-    this.notify();
+    const [pane] = this.insertAll([{ shell, cwd, run }]);
+    await this.startAll([pane]);
     return pane;
   }
 
-  close(pane: PaneItem): void {
+  /**
+   * Puts panes in place without starting their shells, so an arrangement
+   * can be restored first and each shell starts at its final size.
+   */
+  insertAll(specs: readonly PaneSpec[]): Pane[] {
+    const onSignal = (p: Pane, s: PaneSignal) => this.signal(p, s);
+    return specs.map(({ shell, cwd, run }) => {
+      const pane = this.insert(
+        (cb) => new Pane(this.workspace, { shell, cwd, fontSize: this.fontSize, clock: this.clock, onSignal, run, ...cb }),
+      );
+      log.info(`added ${shell}, ${this.panes.length} panes`);
+      return pane;
+    });
+  }
+
+  /** Starts the shells of panes from insertAll, all at once. */
+  async startAll(panes: readonly Pane[]): Promise<void> {
+    await Promise.all(panes.map((p) => p.start()));
+    this.notify();
+  }
+
+  close(pane: Pane): void {
     const index = this.panes.indexOf(pane);
     if (index < 0) return;
     this.panes.splice(index, 1);
-    if (this.focused === pane) this.focused = null;
+    this.focus.forget(pane);
     log.info(`closing ${pane.name}, ${this.panes.length} panes left`);
-    if (pane instanceof Pane) this.signal(pane, { kind: "closed" });
+    this.signal(pane, { kind: "closed" });
 
     const next = this.panes[Math.min(index, this.panes.length - 1)];
     next?.focus();
@@ -90,12 +115,17 @@ export class PaneManager {
 
   /** Terminal panes in the order they were opened. */
   terminals(): Pane[] {
-    return this.panes.filter((p): p is Pane => p instanceof Pane);
+    return [...this.panes];
   }
 
   /** The selected terminal pane, if any. */
   selected(): Pane | null {
-    return this.focused instanceof Pane ? this.focused : null;
+    return this.focus.pane;
+  }
+
+  /** Focuses the next (1) or previous (-1) pane in the order opened, going round. */
+  focusStep(step: 1 | -1): void {
+    this.focus.step(this.panes, step);
   }
 
   /** The pane under a point in CSS pixels, if any. */
@@ -103,24 +133,16 @@ export class PaneManager {
     return this.arranger.paneAt(x, y);
   }
 
-  private insert<T extends PaneItem>(create: (cb: PaneCallbacks) => T): T {
-    const cb: PaneCallbacks = { onClose: (p) => this.close(p), onFocus: (p) => this.setFocus(p) };
+  private insert(create: (cb: Pick<PaneOptions, "onClose" | "onFocus">) => Pane): Pane {
+    const cb = { onClose: (p: Pane) => this.close(p), onFocus: (p: Pane) => this.focus.set(p) };
     const pane = this.arranger.place(() => {
       const created = create(cb);
       this.panes.push(created);
       return created;
-    }, this.focused);
+    }, this.focus.pane);
     pane.focus();
     this.notify();
     return pane;
-  }
-
-  private setFocus(pane: PaneItem): void {
-    if (this.focused === pane) return;
-    this.focused?.setFocused(false);
-    this.focused = pane;
-    pane.setFocused(true);
-    if (pane instanceof Pane) this.signal(pane, { kind: "focus" });
   }
 
   private signal(pane: Pane, signal: PaneSignal): void {

@@ -1,15 +1,24 @@
+//! The app: `run_cli` when heron.exe runs as a Claude Code hook or for the
+//! uninstaller (no window), `run` for the window: plugins, commands, shared
+//! state, and dropping every shell when the page reloads or the app ends.
+
 mod agent;
 mod attention;
 mod claude_dir;
 mod claude_hooks;
 mod claude_version;
 mod commands;
+mod epoch;
+mod file_stamp;
 mod git;
+mod hidden_command;
 mod launch;
 mod logging;
 mod pty;
 mod sessions;
+mod text;
 mod window;
+mod window_menu;
 
 use tauri::webview::PageLoadEvent;
 use tauri::{Manager, RunEvent};
@@ -64,8 +73,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::pty::list_shells,
-            attention::flash_taskbar,
-            launch::take_launch_dir,
+            commands::window::flash_taskbar,
+            commands::window::take_launch_dir,
+            commands::window::show_window_menu,
             commands::pty::spawn_pty,
             commands::pty::write_pty,
             commands::pty::resize_pty,

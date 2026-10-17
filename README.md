@@ -16,8 +16,9 @@
 
 Heron (formerly greenterm) opens several shells side by side in one window and lays them out for you. There are no
 split shortcuts to learn: every action is a button or a drag. The terminals themselves are left untouched
-(default colors, your shell's own output), while the window around them has a green (or black)
-theme that shows which shells are alive.
+(default colors, your shell's own output), while the window around them has a black (or green)
+theme that shows which shells are alive. The one exception: in a pane where Claude Code runs, little pixel
+herons live in the empty cells (see below).
 
 Built with Tauri v2, vanilla TypeScript, xterm.js (WebGL) and ConPTY.
 
@@ -51,6 +52,17 @@ the hooks out again; outside Heron they do nothing. With the hooks on, each row 
 model the session runs (it follows `/model` within a second) and, under it, the subagents running
 now with how long each has run.
 
+The hooks also let Heron see what the agent is doing. While it works, its row says so
+("editing main.ts", "running Run the tests", "thinking"), and under it this turn's tools pile up as small
+blocks colored by kind: reading blue, searching violet, editing green, commands amber, the web pink,
+subagents coral. The tool still running is outlined. Heron follows Claude Code's transcript file for this,
+so it can lag up to 0.7 seconds behind.
+
+Each row also counts the tokens the session used, and this turn ("1.24M tokens · 38.2k this turn"); the
+tooltip splits them into input, output, cache writes and cache reads. Heron adds up the `usage` of every
+answer in the transcript, the part written before it started following counted once on the side.
+Subagents' tokens are not in it yet.
+
 With the hooks on, Heron also checks every answer of the conversation: when the model that wrote
 it is not the one you selected (`/model`), the agent's row warns with the model's name. Each
 answer is checked once, against the model selected when it arrived, so switching models does not
@@ -74,6 +86,17 @@ Two environment variables in each shell (`HERON_PANE`, `HERON_AGENT_DIR`) tell t
 and the plugin which pane they run in. They write a few small files per pane under
 `%LOCALAPPDATA%\io.github.seonggyujo.heron\agents`; the files stay on your machine and are deleted when the
 pane closes. Outside Heron nothing is written.
+
+### Terminal herons
+
+Every pane with Claude Code in it gets a pixel heron (up to three, or none, in Settings) that lives on the
+terminal's blank cells and acts out the agent. While the agent works the heron walks and pecks, and follows
+what it does: it pecks while the agent reads or searches, carries a twig while it edits, runs while a command
+runs, flies about while it is on the web, and stands still with a thought while it thinks. It calls with `!`
+when the agent needs permission and `?` when it asks something, cheers with its wings up when the turn is done,
+and sleeps on one leg when idle. Each running subagent brings a chick that follows it. When text covers it,
+it flies to the nearest blank room. It is drawn over the terminal, never into it, and turns off with
+Animations.
 
 ### Reopen last work
 
@@ -119,16 +142,22 @@ settings); a failing exit keeps the pane open with a red exit-code badge.
 
 ### Settings
 
-The gear button in the title bar opens the settings: green or black window theme, language
-(English or Korean; it starts in the Windows display language), terminal font size, animations on
-or off, whether a clean `exit` closes the pane, and Claude Code hooks. Every change applies at once and is remembered. **Reset** below them asks once more before it puts every setting back to
+The gear button in the title bar opens the settings: black or green window theme (black at
+first), language (English or Korean; it starts in the Windows display language), terminal font size,
+animations on or off, terminal herons per pane (off, 1, 2 or 3), whether a clean `exit` closes the pane, and Claude Code hooks. Every change applies at once and is remembered. **Reset** below them asks once more before it puts every setting back to
 its default.
 
 ![Settings](docs/media/settings.gif)
 
 ### Also
 
-- **Open in Heron** in the Explorer context menu of folders and drives (on Windows 11 under "Show more options"). If Heron is already running, the folder opens as a new pane.
+- **Open in Heron** in the Explorer context menu of folders and drives (on Windows 11 under "Show more options"). If Heron is already running, the folder opens as a new pane. New panes (**+**, Ctrl+Shift+T) then open in that folder.
+- Ctrl+Shift+T opens a pane, Ctrl+Tab and Ctrl+Shift+Tab go to the next and previous pane.
+- Right-click the title bar, or press Alt+Space, for the window menu (restore, move, size, minimize, maximize, close).
+- Clicking the app's buttons leaves the keyboard with the terminal, so you can keep typing. Up, Down and Enter
+  pick in the shell menu.
+- Shift+wheel scrolls the terminal even while an app tracks the mouse.
+- A paste never runs as typed keys: inside a bracketed paste, ESC is dropped from the pasted text.
 - Ctrl+click a link in the output to open it in your browser (http and https only).
   In apps that track the mouse (Claude Code, vim), that click is not passed to the app, so the link opens once.
 - Drop files on a pane to type their paths, like Windows Terminal (handy for attaching images in CLI tools).

@@ -1,3 +1,5 @@
+//! The pause switch of one PTY's output (flow control from the frontend).
+
 use std::sync::{Condvar, Mutex};
 
 /// Pause switch for one PTY's output. While closed, the batcher stops

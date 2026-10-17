@@ -4,6 +4,7 @@
 
 use serde_json::Value;
 
+use super::timestamps::entry_time;
 use crate::claude_version::{self, Version};
 
 /// Claude Code tells hooks about model switches (PostModelSwitch) since this
@@ -22,16 +23,12 @@ pub struct Answer {
     pub at: Option<u64>,
 }
 
-/// The answer on one transcript line, or None for anything else. Subagent
+/// The answer in one transcript entry, or None for anything else. Subagent
 /// entries (`isSidechain`) are skipped because subagents may use other
 /// models on purpose, and so are `<synthetic>` placeholders written on
 /// interruptions and errors, and answers of a Claude Code older than
 /// MODEL_SWITCH_HOOK.
-pub fn answer_of(line: &str) -> Option<Answer> {
-    if !line.contains("\"assistant\"") {
-        return None;
-    }
-    let entry: Value = serde_json::from_str(line).ok()?;
+pub fn answer_of(entry: &Value) -> Option<Answer> {
     if entry.get("type")?.as_str()? != "assistant" || entry.get("isSidechain").and_then(Value::as_bool) == Some(true) {
         return None;
     }
@@ -44,7 +41,7 @@ pub fn answer_of(line: &str) -> Option<Answer> {
     Some(Answer {
         id: message.get("id").or_else(|| entry.get("uuid")).and_then(Value::as_str).map(str::to_owned),
         model: model.to_owned(),
-        at: entry.get("timestamp").and_then(Value::as_str).and_then(iso_millis),
+        at: entry_time(entry),
     })
 }
 
@@ -66,47 +63,15 @@ fn base_model(id: &str) -> String {
     id.to_ascii_lowercase()
 }
 
-/// "2026-10-10T05:09:03.787Z" in ms since the Unix epoch: the UTC form
-/// Claude Code writes. None for anything else.
-fn iso_millis(ts: &str) -> Option<u64> {
-    let b = ts.as_bytes();
-    let shape = b.len() >= 20 && b[4] == b'-' && b[7] == b'-' && b[10] == b'T' && b[13] == b':' && b[16] == b':';
-    if !shape || !ts.ends_with('Z') {
-        return None;
-    }
-    let num = |from: usize, to: usize| ts.get(from..to)?.parse::<u64>().ok();
-    let (year, month, day) = (num(0, 4)?, num(5, 7)?, num(8, 10)?);
-    let seconds = num(11, 13)? * 3600 + num(14, 16)? * 60 + num(17, 19)?;
-    let millis = match &ts[19..ts.len() - 1] {
-        "" => 0,
-        fraction => {
-            let digits = fraction.strip_prefix('.')?;
-            let ms = format!("{:0<3}", digits.get(..3.min(digits.len()))?);
-            ms.parse::<u64>().ok()?
-        }
-    };
-    let days = u64::try_from(days_from_civil(year, month, day)).ok()?;
-    Some((days * 86_400 + seconds) * 1000 + millis)
-}
-
-/// Days since 1970-01-01 (Howard Hinnant's algorithm).
-fn days_from_civil(year: u64, month: u64, day: u64) -> i64 {
-    let (year, month, day) = (year as i64 - i64::from(month <= 2), month as i64, day as i64);
-    let era = year.div_euclid(400);
-    let year_of_era = year - era * 400;
-    let day_of_year = (153 * (month + if month > 2 { -3 } else { 9 }) + 2) / 5 + day - 1;
-    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
-    era * 146_097 + day_of_era - 719_468
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn line(extra: &str) -> String {
-        format!(
+    fn line(extra: &str) -> Value {
+        let text = format!(
             r#"{{"type":"assistant","isSidechain":false,"timestamp":"2026-10-10T00:18:30.302Z",{extra}"message":{{"id":"msg_1","model":"claude-opus-5-5"}}}}"#
-        )
+        );
+        serde_json::from_str(&text).unwrap()
     }
 
     #[test]
@@ -120,9 +85,10 @@ mod tests {
     #[test]
     fn skips_subagents_placeholders_and_other_entries() {
         assert_eq!(answer_of(&line(r#""isSidechain":true,"#)), None);
-        assert_eq!(answer_of(&line("").replace("claude-opus-5-5", "<synthetic>")), None);
-        assert_eq!(answer_of(r#"{"type":"user","message":{"content":"assistant"}}"#), None);
-        assert_eq!(answer_of(r#"{"type":"assistant","#), None);
+        let mut placeholder = line("");
+        placeholder["message"]["model"] = "<synthetic>".into();
+        assert_eq!(answer_of(&placeholder), None);
+        assert_eq!(answer_of(&serde_json::json!({"type": "user", "message": {"content": "assistant"}})), None);
     }
 
     #[test]
@@ -136,13 +102,5 @@ mod tests {
         assert!(same_model("claude-opus-5-5[1m]", "claude-opus-5-5"));
         assert!(same_model("claude-haiku-4-5-20251001", "Claude-Haiku-4-5"));
         assert!(!same_model("claude-sonnet-5-5", "claude-opus-5-5"));
-    }
-
-    #[test]
-    fn reads_utc_timestamps_only() {
-        assert_eq!(iso_millis("1970-01-01T00:00:00Z"), Some(0));
-        assert_eq!(iso_millis("2000-03-01T00:00:01.5Z"), Some(951_868_801_500));
-        assert_eq!(iso_millis("2026-10-10T00:18:30+09:00"), None);
-        assert_eq!(iso_millis("yesterday"), None);
     }
 }

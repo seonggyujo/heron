@@ -63,14 +63,16 @@
   box-shadow: 0 0 0 2px var(--bg-raised), 0 0 0 3px var(--fg-dim);
 }
 
-/* Language choice: two joined buttons, the current one lit. */
-.lang-toggle .tb-button {
+/* Language and terminal herons: joined buttons, the current one lit. */
+.lang-toggle .tb-button,
+.heron-count-toggle .tb-button {
   height: 24px;
   padding: 0 9px;
   font-size: 11px;
 }
 
-.lang-toggle .tb-button[aria-checked="true"] {
+.lang-toggle .tb-button[aria-checked="true"],
+.heron-count-toggle .tb-button[aria-checked="true"] {
   background: var(--bg-hover);
   color: var(--fg);
   border-color: var(--border-strong);

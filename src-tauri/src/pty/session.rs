@@ -1,3 +1,5 @@
+//! One running shell: starting it, input, resize, pause, kill and close.
+
 use std::fmt::Display;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};

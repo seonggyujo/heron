@@ -1,7 +1,6 @@
 import "./styles/stylesheets";
 import { loadFontSize, saveFontSize } from "./app/font-size";
 import { createLogger } from "./app/log";
-import { installFileDrop } from "./app/file-drop";
 import { applyMotion } from "./app/motion";
 import { installLongTaskMonitor } from "./app/perf-monitor";
 import { forgetSettings } from "./app/reset";
@@ -12,12 +11,16 @@ import { installVisibilityTracking } from "./app/visibility";
 import { applyLang } from "./i18n/lang";
 import { onOpenFolder, takeLaunchDir } from "./ipc/launch";
 import { listShells, type ShellKind } from "./ipc/pty";
+import { showWindowMenu } from "./ipc/window-menu";
+import { installFileDrop } from "./pane/file-drop";
 import { PaneManager } from "./pane/pane-manager";
 import { installShortcutGuard } from "./terminal/keys";
 import { createEmptyState } from "./ui/empty-state";
+import { keepPaneFocus } from "./ui/keep-pane-focus";
 import { createNewTerminalButton } from "./ui/new-terminal-button";
 import { createSettings } from "./ui/settings-panel";
 import { createShellMenu } from "./ui/shell-menu";
+import { installShortcuts } from "./ui/shortcuts";
 import { createTerminalCount } from "./ui/terminal-count";
 import { createTidyButton } from "./ui/tidy-button";
 import { createTitlebar } from "./ui/titlebar";
@@ -25,6 +28,9 @@ import { wireAgents } from "./wire-agents";
 import { wireNewAgent } from "./wire-new-agent";
 import { wireSessions } from "./wire-sessions";
 import { wireWorkspace } from "./wire-workspace";
+
+// Bootstrap only: builds the modules and wires them to one another
+// (docs/ARCHITECTURE.md has the map).
 
 const log = createLogger("app");
 
@@ -36,6 +42,7 @@ async function main(): Promise<void> {
   applyLang();
   applyMotion();
   installShortcutGuard();
+  keepPaneFocus();
   await installVisibilityTracking();
   installLongTaskMonitor();
 
@@ -58,7 +65,9 @@ async function main(): Promise<void> {
   let defaultShell = loadDefaultShell(shells);
   log.info(`shells: ${shells.join(", ")}; default ${defaultShell}`);
 
-  const open = (shell: ShellKind, cwd: string | null = null) => {
+  // New panes open in the folder Heron was opened on ("Open in Heron"), else home.
+  const launchDir = await takeLaunchDir();
+  const open = (shell: ShellKind, cwd: string | null = launchDir) => {
     panes.add(shell, cwd).catch((err) => log.error("add terminal failed", err));
   };
 
@@ -89,6 +98,11 @@ async function main(): Promise<void> {
   // "Open in Heron" while this window runs: a new pane in that folder.
   await onOpenFolder((dir) => open(defaultShell, dir));
   await installFileDrop((x, y) => panes.paneAt(x, y));
+  installShortcuts({
+    newPane: () => open(defaultShell),
+    focusStep: (step) => panes.focusStep(step),
+    windowMenu: () => void showWindowMenu(false),
+  });
 
   const setDefaultShell = (shell: ShellKind) => {
     defaultShell = shell;
@@ -130,7 +144,7 @@ async function main(): Promise<void> {
   titlebar.actions.append(tidy.el, count.el, settings.button, newButton.el);
 
   // The last run's panes (Settings > Reopen last work), then "Open in Heron".
-  await wireWorkspace(panes, clock, shells, agents.sessionOf).open(defaultShell, await takeLaunchDir());
+  await wireWorkspace(panes, clock, shells, agents.sessionOf).open(defaultShell, launchDir);
   log.info("ready");
 }
 

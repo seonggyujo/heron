@@ -1,4 +1,4 @@
-/* Under the title bar: the agent sidebar (when shown), then the workspace. */
+/* Under the title bar: the agent sidebar, then the workspace. */
 .app-middle {
   flex: 1;
   min-height: 0;
@@ -30,7 +30,7 @@
   border-color: var(--border-strong);
 }
 
-/* Files dragged over this pane will be typed into it (app/file-drop.ts). */
+/* Files dragged over this pane will be typed into it (pane/file-drop.ts). */
 .pane.drop-target {
   border-color: var(--fg);
 }

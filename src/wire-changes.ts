@@ -7,12 +7,14 @@ import { gitChanges, type Changes } from "./ipc/folders";
 // How far each agent's folder is from its last commit, for the sidebar
 // rows of wire-agents.ts: asks git through ipc/folders.ts and keeps the
 // answers. A folder is asked again when its agent's state changes, when the
-// window gets focus, and every 15 s while its agent works; an answer that
-// differs asks for a redraw.
+// window gets focus (unless it was asked moments ago), and every 15 s while
+// its agent works; an answer that differs asks for a redraw.
 
 const log = createLogger("changes");
 
 const WHILE_WORKING_MS = 15_000;
+/** Alt+Tab back and forth asks a folder at most this often. */
+const ON_FOCUS_MS = 10_000;
 
 /** An agent row's pane, folder and state. */
 export interface WatchedAgent {
@@ -29,13 +31,14 @@ export class ChangeWatch {
   private readonly busy = new Set<string>();
   /** Asked while busy: ask once more when the answer comes. */
   private readonly again = new Set<string>();
-  private stopClock: (() => void) | null = null;
+  private readonly ticking: (on: boolean) => void;
 
   constructor(
-    private readonly clock: UptimeClock,
+    clock: UptimeClock,
     private readonly onChange: () => void,
   ) {
-    window.addEventListener("focus", () => this.agents.forEach((a) => this.ask(a.folder)));
+    this.ticking = clock.switchFor((now) => this.tick(now));
+    window.addEventListener("focus", () => this.askOlderThan(ON_FOCUS_MS, Date.now()));
   }
 
   /** Null until git answered, and outside a repository. */
@@ -54,17 +57,17 @@ export class ChangeWatch {
       this.states.set(a.pty, a.state);
       this.ask(a.folder);
     }
-    const working = agents.some((a) => a.state === "working");
-    if (working && !this.stopClock) this.stopClock = this.clock.subscribe((now) => this.tick(now));
-    else if (!working && this.stopClock) {
-      this.stopClock();
-      this.stopClock = null;
-    }
+    this.ticking(agents.some((a) => a.state === "working"));
   }
 
   private tick(now: number): void {
+    this.askOlderThan(WHILE_WORKING_MS, now, "working");
+  }
+
+  /** Asks again about the folders (of agents in `state`, or all) last asked `ms` or more ago. */
+  private askOlderThan(ms: number, now: number, state?: AgentState): void {
     for (const a of this.agents) {
-      if (a.state === "working" && now - (this.askedAt.get(folderKey(a.folder)) ?? 0) >= WHILE_WORKING_MS) this.ask(a.folder);
+      if ((!state || a.state === state) && now - (this.askedAt.get(folderKey(a.folder)) ?? 0) >= ms) this.ask(a.folder);
     }
   }
 

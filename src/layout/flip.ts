@@ -1,3 +1,4 @@
+import { EASE_OUT } from "../app/motion";
 import { motionAllowed } from "../app/visibility";
 
 // FLIP: measure, change layout, then animate each element from its old box
@@ -5,7 +6,6 @@ import { motionAllowed } from "../app/visibility";
 // compositor; the real layout (and PTY resize) happens at once.
 
 const DURATION = 220;
-const EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 export function flip(elements: HTMLElement[], mutate: () => void): void {
   if (!motionAllowed() || elements.length === 0) {
@@ -35,7 +35,7 @@ export function flip(elements: HTMLElement[], mutate: () => void): void {
         { transformOrigin: "top left", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
         { transformOrigin: "top left", transform: "none" },
       ],
-      { duration: DURATION, easing: EASING },
+      { duration: DURATION, easing: EASE_OUT },
     );
   });
 }

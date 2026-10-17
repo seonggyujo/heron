@@ -1,15 +1,25 @@
 // Open/close for a panel under a button: opens below the anchor, right
 // edges aligned (title bar) or left edges (agent sidebar); closes on outside
 // click, Escape, window blur, or another click on the button that opened it
-// ([aria-haspopup] inside the anchor).
+// ([aria-haspopup] inside the anchor). While it is open, keys come to it
+// before the terminal (which keeps the keyboard, ui/keep-pane-focus.ts), so
+// Escape and the keys the panel takes never reach the shell.
 
 export interface Popover {
   toggle(anchor: HTMLElement): void;
   close(): void;
 }
 
-/** `onOpen` runs right before the panel shows, e.g. to refresh it. */
-export function createPopover(el: HTMLElement, onOpen?: () => void, align: "left" | "right" = "right"): Popover {
+/**
+ * `onOpen` runs right before the panel shows, e.g. to refresh it. `onKey`
+ * gets the keys while it is open and returns true for the ones it took.
+ */
+export function createPopover(
+  el: HTMLElement,
+  onOpen?: () => void,
+  align: "left" | "right" = "right",
+  onKey?: (e: KeyboardEvent) => boolean,
+): Popover {
   let anchorEl: HTMLElement | null = null;
   const onOutside = (e: MouseEvent) => {
     const target = e.target as Element;
@@ -21,8 +31,11 @@ export function createPopover(el: HTMLElement, onOpen?: () => void, align: "left
     if (trigger && anchorEl?.contains(trigger)) return;
     close();
   };
-  const onKey = (e: KeyboardEvent) => {
+  const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") close();
+    else if (!onKey?.(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   function open(anchor: HTMLElement): void {
@@ -35,14 +48,14 @@ export function createPopover(el: HTMLElement, onOpen?: () => void, align: "left
     el.classList.add("open");
     // Next tick, so the click that opened the panel does not close it.
     setTimeout(() => document.addEventListener("mousedown", onOutside));
-    document.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKeyDown, { capture: true });
     window.addEventListener("blur", close);
   }
 
   function close(): void {
     el.classList.remove("open");
     document.removeEventListener("mousedown", onOutside);
-    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("keydown", onKeyDown, { capture: true });
     window.removeEventListener("blur", close);
   }
 

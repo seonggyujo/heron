@@ -1,3 +1,6 @@
+//! The reader thread of one PTY: blocking 64 KB reads into a small bounded
+//! channel, which is where backpressure starts.
+
 use std::io::{ErrorKind, Read};
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::thread;

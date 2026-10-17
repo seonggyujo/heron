@@ -53,6 +53,15 @@ function strings(raw: string): string[] | undefined {
 /** Pane, menu and glow animations. */
 export const motionPref = pref("heron.motion", true, bool);
 
+export const HERONS_MAX = 3;
+const heronCount = (raw: string) => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 && n <= HERONS_MAX ? n : undefined;
+};
+
+/** Settings > Terminal herons: how many live in each agent pane, 0 for none (pane/pane-herons.ts). */
+export const heronsPref = pref("heron.herons", 1, heronCount);
+
 /** Close a terminal pane when its shell exits with code 0. */
 export const closeOnExitPref = pref("heron.closeOnExit", true, bool);
 
@@ -76,6 +85,6 @@ export const agentHooksWantedPref = pref("heron.agentHooks", false, bool);
 
 export function resetPrefs(): void {
   // agentHooksWantedPref stays: the hooks stay in Claude Code's settings.
-  const prefs = [motionPref, closeOnExitPref, restoreWorkspacePref, sidebarCollapsedPref, pluginHintHiddenPref, hooksOfferHiddenPref];
+  const prefs = [motionPref, heronsPref, closeOnExitPref, restoreWorkspacePref, sidebarCollapsedPref, pluginHintHiddenPref, hooksOfferHiddenPref];
   [...prefs, foldedSessionGroupsPref].forEach((p) => p.reset());
 }

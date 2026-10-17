@@ -57,7 +57,7 @@ export function attachClipboardKeys(term: Terminal): void {
     const key = e.key.toLowerCase();
 
     if (key === "c" && copySelection(term)) return false;
-    // Let the browser fire a paste event; xterm handles that itself.
+    // Let the browser fire a paste event; clipboard.ts takes it.
     if (key === "v") return false;
     return true;
   });

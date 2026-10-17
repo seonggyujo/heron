@@ -1,7 +1,7 @@
 import type { Fittable } from "../layout/fit-scheduler";
 
-// What the pane manager, the layout and dragging need from a pane
-// (pane.ts), so they do not depend on the terminal itself.
+// What the layout and dragging need from a pane (pane.ts), so they do not
+// depend on the terminal itself.
 
 export interface PaneItem extends Fittable {
   readonly el: HTMLElement;
@@ -19,10 +19,4 @@ export interface PaneItem extends Fittable {
   enter(): void;
   leave(): Promise<void>;
   dispose(): void;
-}
-
-/** What a pane reports back to the pane manager. */
-export interface PaneCallbacks {
-  onClose(pane: PaneItem): void;
-  onFocus(pane: PaneItem): void;
 }

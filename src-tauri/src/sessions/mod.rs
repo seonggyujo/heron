@@ -2,9 +2,11 @@
 //! files under `<config folder>/projects/<project>/`, each read from its end
 //! (summary.rs), and deleting one. Claude Code writes the title records again
 //! on every prompt, so the end holds the latest. Sessions some Claude Code
-//! runs now (live.rs) and sessions whose folder is gone are left out. Also
-//! which saved sessions can be resumed after a restart.
+//! runs now (live.rs) and sessions whose folder is gone are left out; a
+//! file is read again only when it changed (cache.rs). Also which saved
+//! sessions can be resumed after a restart.
 
+mod cache;
 mod live;
 mod recycle;
 mod summary;
@@ -14,11 +16,12 @@ use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 
 use crate::claude_dir::config_dir;
+use crate::epoch;
+use crate::file_stamp::FileStamp;
 
 /// Bytes read from the end of a session file.
 const TAIL_BYTES: u64 = 256 * 1024;
@@ -39,14 +42,14 @@ pub struct RecentSession {
 pub fn recent(limit: usize) -> Vec<RecentSession> {
     let Some(config) = config_dir() else { return Vec::new() };
     let running = live::running_ids(&config);
-    let mut files: Vec<(PathBuf, SystemTime)> = session_files(&config)
-        .filter_map(|path| Some((path.clone(), path.metadata().ok()?.modified().ok()?)))
-        .collect();
-    files.sort_by_key(|(_, modified)| Reverse(*modified));
+    let mut files: Vec<(PathBuf, FileStamp)> =
+        session_files(&config).filter_map(|path| Some((path.clone(), FileStamp::of(&path.metadata().ok()?)?))).collect();
+    files.sort_by_key(|(_, stamp)| Reverse(stamp.modified));
+    cache::keep_only(files.iter().map(|(path, _)| path));
     files
         .into_iter()
-        .filter_map(|(path, modified)| read(&path, modified))
-        .filter(|session| !running.contains(&session.id))
+        .filter(|(path, _)| !path.file_stem().and_then(|s| s.to_str()).is_some_and(|id| running.contains(id)))
+        .filter_map(|(path, stamp)| read(&path, stamp))
         .take(limit)
         .collect()
 }
@@ -97,16 +100,16 @@ fn session_files(config: &Path) -> impl Iterator<Item = PathBuf> {
         .filter(|path| path.extension().is_some_and(|ext| ext == "jsonl"))
 }
 
-fn read(path: &Path, modified: SystemTime) -> Option<RecentSession> {
+fn read(path: &Path, stamp: FileStamp) -> Option<RecentSession> {
     let id = path.file_stem()?.to_str()?;
     if !summary::is_session_id(id) {
         return None;
     }
-    let summary = summary::summarize(&tail(path).ok()?)?;
+    let summary = cache::summary(path, stamp, || summary::summarize(&tail(path).ok()?))?;
     if !Path::new(&summary.cwd).is_dir() {
         return None;
     }
-    let modified = modified.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64);
+    let modified = epoch::millis(stamp.modified);
     Some(RecentSession { id: id.to_owned(), cwd: summary.cwd, title: summary.title, modified })
 }
 

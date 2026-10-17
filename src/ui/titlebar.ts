@@ -1,9 +1,11 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { onLangChange, t } from "../i18n/lang";
+import { showWindowMenu } from "../ipc/window-menu";
 
 // macOS-style unified title bar: brand on the left, app actions and then
 // the traffic lights on the right. The empty space drags the window, and a
-// double-click there toggles maximize (handled by data-tauri-drag-region).
+// double-click there toggles maximize (handled by data-tauri-drag-region);
+// a right-click there opens the window's system menu, as in any window.
 
 const GLYPHS = {
   close: '<path d="M3 3l4 4M7 3l-4 4"/>',
@@ -63,6 +65,11 @@ export function createTitlebar(): Titlebar {
   actions.className = "titlebar-actions";
 
   el.append(brand, actions, lights);
+  el.addEventListener("contextmenu", (e) => {
+    if ((e.target as Element).closest("button")) return;
+    e.preventDefault();
+    void showWindowMenu(true);
+  });
 
   // Grey out the traffic lights when the window loses focus, like macOS.
   // The Tauri window event follows the OS window's activation.

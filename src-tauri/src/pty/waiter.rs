@@ -1,3 +1,6 @@
+//! The waiter thread of one PTY: waits for the shell to end, then closes
+//! up in an order that keeps the last output, and tells the frontend.
+
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 

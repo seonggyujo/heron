@@ -15,6 +15,8 @@ import "./settings.css";
 import "./empty-state.css";
 import "./agent-sidebar.css";
 import "./agent-item.css";
+import "./agent-activity.css";
+import "./agent-tokens.css";
 import "./subagent-lines.css";
 import "./new-agent.css";
 import "./agent-folder-menu.css";

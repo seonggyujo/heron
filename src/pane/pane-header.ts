@@ -1,4 +1,6 @@
-import { formatUptime, type UptimeClock } from "../app/uptime-clock";
+import { span } from "../app/dom";
+import { formatUptime } from "../app/durations";
+import type { UptimeClock } from "../app/uptime-clock";
 import { onLangChange, t } from "../i18n/lang";
 
 // Pane header DOM: status dot, shell name, exit badge, current folder,
@@ -17,13 +19,6 @@ export interface PaneHeader {
   showExit(code: number | null): void;
   /** Stops the uptime and following language changes. */
   dispose(): void;
-}
-
-function span(className: string, text = ""): HTMLSpanElement {
-  const el = document.createElement("span");
-  el.className = className;
-  el.textContent = text;
-  return el;
 }
 
 /** Updates text only when it changed, and mirrors it into the tooltip. */

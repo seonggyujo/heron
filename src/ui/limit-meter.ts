@@ -1,4 +1,5 @@
 import { fillOf, type Limit } from "../agent/usage";
+import { formatResetIn } from "../app/durations";
 import { t } from "../i18n/lang";
 
 // One usage limit in the usage bar:
@@ -10,15 +11,6 @@ import { t } from "../i18n/lang";
 export interface LimitMeter {
   el: HTMLElement;
   show(limit: Limit | null, nowSec: number): void;
-}
-
-/** 2h 13m, 3d 4h, 12m: time left until the limit resets. */
-export function formatResetIn(seconds: number): string {
-  const m = Math.max(0, Math.round(seconds / 60));
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${m % 60}m`;
-  return `${Math.floor(h / 24)}d ${h % 24}h`;
 }
 
 /** `label` is read on every show, so it follows the language. */

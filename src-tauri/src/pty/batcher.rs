@@ -1,3 +1,6 @@
+//! The batcher thread of one PTY: merges the reader's chunks and sends them
+//! to the frontend's channel every 12 ms or 64 KB.
+
 use std::sync::mpsc::{Receiver, RecvTimeoutError, TryRecvError};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};

@@ -50,8 +50,10 @@ export function wireWorkspace(
       if (!session) return undefined;
       return (resumable.has(session) && resumeCommand(session)) || startCommand(false);
     };
-    for (const pane of saved.panes) await panes.add(pane.shell, pane.cwd, command(pane.session));
+    // All panes and their arrangement first, then every shell at once at its final size.
+    const opened = panes.insertAll(saved.panes.map((p) => ({ shell: p.shell, cwd: p.cwd, run: command(p.session) })));
     const arranged = saved.layout !== null && panes.restoreLayout(saved.layout);
+    await panes.startAll(opened);
     log.info(`reopened ${saved.panes.length} panes, ${resumable.size}/${ids.length} sessions resumed${arranged ? ", own layout" : ""}`);
   };
 

@@ -4,10 +4,12 @@
 
 use serde_json::Value;
 
+use crate::text::ellipsize;
+
 /// Longest title kept; a longer one is cut there.
 const TITLE_CHARS: usize = 80;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Summary {
     pub cwd: String,
     pub title: String,
@@ -38,11 +40,7 @@ pub fn summarize(tail: &str) -> Option<Summary> {
 }
 
 fn first_line(text: &str) -> String {
-    let line = text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default();
-    if line.chars().count() <= TITLE_CHARS {
-        return line.to_owned();
-    }
-    line.chars().take(TITLE_CHARS).chain(['…']).collect()
+    ellipsize(text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default(), TITLE_CHARS)
 }
 
 /// A UUID (`158ec1a7-965f-43a3-99cb-8f9e257cb741`), the name Claude Code

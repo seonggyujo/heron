@@ -1,14 +1,16 @@
 // What Heron knows about the coding agent (Claude Code) in one pane, and
-// how each signal changes it. Pure: no DOM, no IPC. Sources:
-//   - agent updates (exact, ipc/agent.ts): the state and the running
-//     subagents from Heron's hooks, the model check Heron's backend makes,
-//     and context use from the heron-limits plugin's status line (its
-//     limits: usage.ts)
+// how its state changes. Pure: no DOM, no IPC. The state comes from:
+//   - Heron's hooks (exact, ipc/agent.ts "state")
 //   - the terminal title (rough): "✳ <title>" idle, a turning half circle working
-// Once a hook has reported for a pane, hooks decide the state.
+//   - keys typed in the pane, and the pane getting focus
+// Once a hook has reported for a pane, hooks decide the state. What the
+// backend and the plugin report besides (subagents, model check, activity,
+// tokens, context use) is applied by agent-reports.ts.
 
-import { subagentsOf, type Subagent } from "./subagents";
-import { contextOf } from "./usage";
+import { fieldsOf, textOf } from "../app/unchecked";
+import type { Activity } from "./activity";
+import type { Subagent } from "./subagents";
+import type { TokenReport } from "./tokens";
 
 export type AgentState = "idle" | "working" | "permission" | "question" | "waiting" | "done";
 export type CheckState = "ok" | "mismatch" | "pending";
@@ -38,16 +40,18 @@ export interface Agent {
   sessionId: string | null;
   /** Subagents running now (from the hooks), oldest first. */
   subagents: Subagent[];
+  /** What it is doing, from its transcript (needs the hooks, which name the transcript). */
+  activity: Activity | null;
+  /** The tokens it used, from its transcript (needs the hooks too). */
+  tokens: TokenReport | null;
 }
 
 const STATES: readonly AgentState[] = ["idle", "working", "permission", "question", "waiting", "done"];
 const WORKING_TITLE = /^[◐◓◑◒]\s+(.*)$/u;
 const IDLE_TITLE = /^✳\s+(.*)$/u;
 
-const record = (v: unknown): Record<string, unknown> => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
-const text = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
-
-const fresh = (now: number): Agent => ({
+/** An agent seen for the first time, idle until a signal says more. */
+export const newAgent = (now: number): Agent => ({
   state: "idle",
   since: now,
   fromHooks: false,
@@ -58,6 +62,8 @@ const fresh = (now: number): Agent => ({
   cwd: null,
   sessionId: null,
   subagents: [],
+  activity: null,
+  tokens: null,
 });
 
 function withState(a: Agent, state: AgentState, now: number): Agent {
@@ -66,30 +72,12 @@ function withState(a: Agent, state: AgentState, now: number): Agent {
 
 /** Hook state file. Null when the session ended. */
 export function applyState(prev: Agent | undefined, data: unknown, now: number): Agent | null | undefined {
-  const d = record(data);
+  const d = fieldsOf(data);
   if (d.state === "ended") return null;
   const state = STATES.find((s) => s === d.state);
   if (!state) return prev;
-  const a = withState({ ...(prev ?? fresh(now)), fromHooks: true }, state, now);
-  return { ...a, message: text(d.message), cwd: text(d.cwd) ?? a.cwd, sessionId: text(d.session_id) ?? a.sessionId };
-}
-
-/** The plugin's status line file: context use. Its limits: usage.ts. */
-export function applyStatus(prev: Agent | undefined, data: unknown, now: number): Agent {
-  return { ...(prev ?? fresh(now)), context: contextOf(data) };
-}
-
-/** The subagents running now. Only for a pane that has an agent. */
-export function applySubagents(prev: Agent | undefined, data: unknown, now: number): Agent | undefined {
-  return prev && { ...prev, subagents: subagentsOf(data, now) };
-}
-
-/** The model check of the backend (src-tauri/src/agent). Only for a pane that has an agent. */
-export function applyCheck(prev: Agent | undefined, data: unknown): Agent | undefined {
-  if (!prev) return prev;
-  const c = record(data);
-  const state = (["ok", "mismatch", "pending"] as const).find((s) => s === c.state);
-  return { ...prev, check: state ? { state, selected: text(c.selected), actual: text(c.actual) } : null };
+  const a = withState({ ...(prev ?? newAgent(now)), fromHooks: true }, state, now);
+  return { ...a, message: textOf(d.message), cwd: textOf(d.cwd) ?? a.cwd, sessionId: textOf(d.session_id) ?? a.sessionId };
 }
 
 /** Claude Code's terminal title, or null for any other title. */
@@ -103,7 +91,9 @@ export function readTitle(title: string): { working: boolean; title: string } | 
 export function applyTitle(prev: Agent | undefined, title: string, now: number): Agent | undefined {
   const read = readTitle(title);
   if (!read) return prev;
-  const a = { ...(prev ?? fresh(now)), title: read.title };
+  const base = prev ?? newAgent(now);
+  // xterm reports every title it gets, the same one again too.
+  const a = base.title === read.title ? base : { ...base, title: read.title };
   if (a.fromHooks) return a;
   if (read.working) return withState(a, "working", now);
   return withState(a, a.state === "working" || a.state === "done" ? "done" : "idle", now);

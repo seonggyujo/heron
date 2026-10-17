@@ -1,6 +1,7 @@
 //! Everything Heron watches for one pane, one round at a time: the agent
 //! files (sent on to the frontend as they are), the subagents running, and
-//! the model check, from the transcript the hooks name and the model they
+//! from the transcript the hooks name (conversation.rs): what the agent is
+//! doing, the tokens it used, and the model check against the model they
 //! report (or, while they do not know it, the model the heron-limits status
 //! line shows).
 
@@ -11,13 +12,15 @@ use std::time::SystemTime;
 use log::trace;
 use serde_json::Value;
 
-use super::files::{self, Kind};
+use super::activity::Activity;
+use super::conversation::Conversation;
+use super::file_names::{self, Kind};
 use super::model_check::{ModelCheck, Verdict};
 use super::subagents;
-use super::transcript::Transcript;
+use super::tokens::TokenReport;
 
 /// One `agent-update` for the frontend: `kind` is "state", "status",
-/// "check" or "subagents".
+/// "check", "subagents", "activity" or "tokens".
 pub struct Update {
     pub kind: &'static str,
     pub data: Value,
@@ -25,17 +28,27 @@ pub struct Update {
 
 pub struct PaneWatch {
     modified: HashMap<Kind, SystemTime>,
-    transcript: Option<Transcript>,
+    conversation: Option<Conversation>,
     check: ModelCheck,
     sent: Verdict,
     subagents: Value,
+    sent_activity: Activity,
+    sent_tokens: TokenReport,
 }
 
 impl PaneWatch {
     pub fn new() -> Self {
         let check = ModelCheck::default();
         let sent = check.verdict();
-        Self { modified: HashMap::new(), transcript: None, check, sent, subagents: Value::Array(Vec::new()) }
+        Self {
+            modified: HashMap::new(),
+            conversation: None,
+            check,
+            sent,
+            subagents: Value::Array(Vec::new()),
+            sent_activity: Activity::default(),
+            sent_tokens: TokenReport::default(),
+        }
     }
 
     /// The updates of this round, in order. New answers are judged before a
@@ -48,9 +61,9 @@ impl PaneWatch {
             updates.push(Update { kind: "state", data: state });
         }
         let status = self.read_changed(dir, pty, Kind::Status);
-        if let Some(transcript) = &mut self.transcript {
-            for answer in transcript.read_new() {
-                self.check.answered(&answer.model);
+        if let Some(conversation) = &mut self.conversation {
+            for model in conversation.read() {
+                self.check.answered(&model);
             }
         }
         if let Some(model) = self.read_changed(dir, pty, Kind::Model) {
@@ -67,22 +80,32 @@ impl PaneWatch {
             updates.push(Update { kind: "check", data: serde_json::to_value(&verdict).unwrap_or_default() });
             self.sent = verdict;
         }
-        let subagents = subagents::read(dir, &files::key(pty));
+        let subagents = subagents::read(dir, &file_names::key(pty));
         if subagents != self.subagents {
             updates.push(Update { kind: "subagents", data: subagents.clone() });
             self.subagents = subagents;
+        }
+        let activity = self.conversation.as_ref().map(|c| c.activity().clone()).unwrap_or_default();
+        if activity != self.sent_activity {
+            updates.push(Update { kind: "activity", data: serde_json::to_value(&activity).unwrap_or_default() });
+            self.sent_activity = activity;
+        }
+        let tokens = self.conversation.as_ref().map(Conversation::tokens).unwrap_or_default();
+        if tokens != self.sent_tokens {
+            updates.push(Update { kind: "tokens", data: serde_json::to_value(&tokens).unwrap_or_default() });
+            self.sent_tokens = tokens;
         }
         updates
     }
 
     /// The hooks name the session's transcript; a new one (a new session, or
-    /// /clear) starts the check over.
+    /// /clear) starts the check, the activity and the tokens over.
     fn follow(&mut self, state: &Value) {
         let Some(path) = state.get("transcript_path").and_then(Value::as_str) else { return };
-        if self.transcript.as_ref().is_some_and(|t| t.path() == Path::new(path)) {
+        if self.conversation.as_ref().is_some_and(|c| c.path() == Path::new(path)) {
             return;
         }
-        self.transcript = Some(Transcript::follow(path.into()));
+        self.conversation = Some(Conversation::follow(path.into()));
         self.check.restart();
     }
 
@@ -90,7 +113,7 @@ impl PaneWatch {
     /// files in one step (write, then rename), so a read never sees half a
     /// file; one that cannot be read yet is tried again next round.
     fn read_changed(&mut self, dir: &Path, pty: u32, kind: Kind) -> Option<Value> {
-        let file = files::path(dir, pty, kind);
+        let file = file_names::path(dir, pty, kind);
         let modified = std::fs::metadata(&file).and_then(|m| m.modified()).ok()?;
         if self.modified.get(&kind) == Some(&modified) {
             return None;

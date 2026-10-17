@@ -1,3 +1,4 @@
+import type { Agent } from "../agent/agent-model";
 import { createLogger } from "../app/log";
 import { folderName } from "../app/paths";
 import { SHELL_LABELS } from "../app/shells";
@@ -7,6 +8,7 @@ import { TerminalView } from "../terminal/terminal-view";
 import { OutputGlow } from "./output-glow";
 import { createPaneFrame } from "./pane-frame";
 import type { PaneHeader } from "./pane-header";
+import { PaneHerons } from "./pane-herons";
 import type { PaneItem } from "./pane-item";
 import { animateEnter, animateLeave } from "./pane-motion";
 import { watchPaneTerminal, type PaneSignal } from "./pane-signals";
@@ -14,8 +16,9 @@ import { PtyLink } from "./pty-link";
 import { typeAtFirstPrompt } from "./start-command";
 
 // One pane = frame (header and terminal box, pane-frame.ts) + xterm view +
-// PTY link. The constructor only builds DOM; start() spawns the shell once
-// the pane is laid out in the grid, so the first PTY size is already right.
+// PTY link, with the terminal herons over the view (pane-herons.ts). The
+// constructor only builds DOM; start() spawns the shell once the pane is
+// laid out in the grid, so the first PTY size is already right.
 
 const log = createLogger("pane");
 
@@ -41,6 +44,7 @@ export class Pane implements PaneItem {
   private readonly view: TerminalView;
   private readonly link: PtyLink;
   private readonly glow: OutputGlow;
+  private readonly herons: PaneHerons;
   /** Folder the shell last reported. */
   private readonly where: () => string | null;
 
@@ -53,6 +57,7 @@ export class Pane implements PaneItem {
 
     this.view = new TerminalView(frame.host, opts.fontSize);
     this.glow = new OutputGlow(this.el);
+    this.herons = new PaneHerons(this.view.term, opts.clock);
     this.link = new PtyLink(this.view, () => this.glow.ping());
 
     const type = (text: string) => this.view.term.input(text, true);
@@ -108,6 +113,11 @@ export class Pane implements PaneItem {
     this.view.setFontSize(px);
   }
 
+  /** The coding agent in this pane, null for none: its herons act it out. */
+  showAgent(agent: Agent | null): void {
+    this.herons.show(agent);
+  }
+
   setFocused(focused: boolean): void {
     this.el.classList.toggle("focused", focused);
   }
@@ -118,7 +128,7 @@ export class Pane implements PaneItem {
 
   /** Types text into the shell as a paste (bracketed paste when enabled). */
   paste(text: string): void {
-    this.view.term.paste(text);
+    this.view.paste(text);
     this.focus();
   }
 
@@ -141,6 +151,7 @@ export class Pane implements PaneItem {
   dispose(): void {
     this.link.kill();
     this.glow.dispose();
+    this.herons.dispose();
     this.header.dispose();
     this.view.dispose();
     this.el.remove();

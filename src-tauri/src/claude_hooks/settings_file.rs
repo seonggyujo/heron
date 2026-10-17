@@ -13,7 +13,7 @@ use crate::claude_dir::config_dir;
 
 const BACKUP_SUFFIX: &str = ".heron-backup";
 
-pub fn path() -> Option<PathBuf> {
+fn path() -> Option<PathBuf> {
     Some(config_dir()?.join("settings.json"))
 }
 

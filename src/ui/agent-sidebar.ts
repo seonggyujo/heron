@@ -53,9 +53,9 @@ export function createAgentSidebar(clock: UptimeClock, actions: SidebarActions, 
   let rows: AgentRow[] = [];
   let pluginSeen = false;
   let items: AgentItem[] = [];
-  let stopClock: (() => void) | null = null;
 
   const tick = (now: number) => items.forEach((item) => item.tick(now));
+  const ticking = clock.switchFor(tick);
 
   const draw = () => {
     const sorted = [...rows].sort((a, b) => urgency(a.agent.state) - urgency(b.agent.state) || a.number - b.number);
@@ -74,11 +74,7 @@ export function createAgentSidebar(clock: UptimeClock, actions: SidebarActions, 
     hints.render(pluginSeen);
     tick(Date.now());
     // The clock ticks only while a row shows a working time.
-    if (sorted.length > 0 && !stopClock) stopClock = clock.subscribe(tick);
-    else if (sorted.length === 0 && stopClock) {
-      stopClock();
-      stopClock = null;
-    }
+    ticking(sorted.length > 0);
   };
 
   toggle.addEventListener("click", () => {

@@ -1,3 +1,4 @@
+import { fieldsOf } from "../app/unchecked";
 import type { Node } from "./split-tree";
 
 // A split tree with pane positions in place of panes (pure), to save the
@@ -16,8 +17,6 @@ export function shapeOf<T>(node: Node<T>, items: readonly T[]): Node<number> | n
   return { kind: "split", axis: node.axis, children: children as Node<number>[], sizes: [...node.sizes] };
 }
 
-const record = (v: unknown): Record<string, unknown> => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
-
 function validSizes(sizes: unknown, count: number): sizes is number[] {
   if (!Array.isArray(sizes) || sizes.length !== count) return false;
   if (!sizes.every((s) => typeof s === "number" && s > 0)) return false;
@@ -28,7 +27,7 @@ function validSizes(sizes: unknown, count: number): sizes is number[] {
 export function treeFrom<T>(raw: unknown, items: readonly T[]): Node<T> | null {
   const used = new Set<number>();
   const build = (value: unknown): Node<T> | null => {
-    const r = record(value);
+    const r = fieldsOf(value);
     if (r.kind === "leaf") {
       const i = r.item;
       if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i >= items.length || used.has(i)) return null;

@@ -9,8 +9,9 @@ import { createRecentSessions } from "./ui/recent-sessions";
 // sidebar. A click opens a pane with the default shell in the folder the
 // session last ran in and types `claude --resume <id>` at its first prompt;
 // a session can also be moved to the Recycle Bin. The list is read again
-// when the window gets focus and when an agent's session leaves its pane;
-// sessions running in a pane are left out.
+// when the window gets focus and when an agent's session leaves its pane
+// (the backend reads only the files that changed), and redrawn only when it
+// differs; sessions running in a pane are left out.
 
 const log = createLogger("sessions");
 
@@ -55,6 +56,7 @@ export function wireSessions(panes: () => PaneManager, shell: () => ShellKind): 
   const load = () => {
     recentSessions()
       .then((list) => {
+        if (JSON.stringify(list) === JSON.stringify(sessions)) return;
         sessions = list;
         draw();
       })

@@ -1,3 +1,6 @@
+//! The shells Heron offers (PowerShell 7, Windows PowerShell, cmd, Git
+//! Bash): which are installed, and the command that starts each.
+
 use std::env;
 use std::path::{Path, PathBuf};
 

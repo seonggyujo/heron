@@ -61,7 +61,10 @@ export function createAgentHints(): AgentHints {
     if (!turnOn.disabled) turnOn.textContent = s.hooksTurnOn;
     plugin.el.hidden = !offer.el.hidden || seen || pluginHintHiddenPref.get();
     plugin.text.textContent = s.agentPluginHint;
-    for (const close of el.querySelectorAll(".hint-close")) close.setAttribute("aria-label", s.hide);
+    for (const close of el.querySelectorAll<HTMLElement>(".hint-close")) {
+      close.setAttribute("aria-label", s.hide);
+      close.title = s.hide;
+    }
   }
 
   return { el, render };

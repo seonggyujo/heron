@@ -2,7 +2,7 @@
 //! they do and which model they use, without any plugin. With the user's consent
 //! (the sidebar or Settings), Heron adds entries to Claude Code's
 //! settings.json that run `heron.exe --agent-hook` on a few events
-//! (entry.rs writes the pane's state and model files). The uninstaller and Settings run
+//! (entry.rs writes the pane's state, model and subagent files). The uninstaller and Settings run
 //! `remove`, which leaves the user's own hooks as they were.
 
 mod config;

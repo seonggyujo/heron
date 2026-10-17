@@ -31,6 +31,13 @@ export const en = {
   fontSmaller: "Smaller font",
   fontLarger: "Larger font",
   animations: "Animations",
+  herons: "Terminal herons",
+  heronsOff: "Off",
+  heronsHint:
+    "How many herons live in the empty space of each Claude Code pane. While the agent works they act out what it does: " +
+    "peck while it reads, carry a twig while it edits, run while a command runs, fly about on the web, stand still to think. " +
+    "They call with ! or ? when it needs you, cheer when it is done and sleep when idle. Each running subagent brings a chick. " +
+    "Drawn over blank cells only",
   closeOnExit: "Close pane on exit 0",
   closeOnExitHint: "Close pane when the shell exits cleanly",
   restoreWorkspace: "Reopen last work",
@@ -52,6 +59,22 @@ export const en = {
   agentQuestion: "has a question",
   agentWaiting: "waiting for you",
   agentDone: "done",
+  doingThink: "thinking",
+  doingWrite: "writing",
+  doingRead: (what: string) => `reading ${what}`,
+  doingSearch: (what: string) => `searching ${what}`,
+  doingEdit: (what: string) => `editing ${what}`,
+  doingRun: (what: string) => `running ${what}`,
+  doingWeb: (what: string) => `browsing ${what}`,
+  doingAgent: (what: string) => `delegating ${what}`,
+  doingTool: (what: string) => `using ${what}`,
+  turnTools: (n: number) => (n === 1 ? "1 tool this turn" : `${n} tools this turn`),
+  tokens: (total: string, turn: string) => `${total} tokens · ${turn} this turn`,
+  tokensSession: "Session",
+  tokensSessionCounting: "Session (still counting the earlier part)",
+  tokensTurn: "This turn",
+  tokenKinds: (input: string, output: string, write: string, read: string) =>
+    `input ${input} · output ${output} · cache write ${write} · cache read ${read}`,
   agentMismatch: (selected: string, actual: string) => `Selected ${selected}, answered by ${actual}`,
   agentPluginHint: "Install the heron-limits plugin to see usage limits and context use",
   hooksOffer: "See permission requests, questions and model checks too: Heron adds its hooks to Claude Code's settings.json.",

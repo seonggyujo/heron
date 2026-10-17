@@ -25,6 +25,18 @@ export class UptimeClock {
     };
   }
 
+  /** A switch for `fn`, for what ticks only at times: on subscribes it (once), off unsubscribes. */
+  switchFor(fn: Tick): (on: boolean) => void {
+    let stop: (() => void) | null = null;
+    return (on) => {
+      if (on && !stop) stop = this.subscribe(fn);
+      else if (!on && stop) {
+        stop();
+        stop = null;
+      }
+    };
+  }
+
   private sync(): void {
     const shouldRun = this.listeners.size > 0 && !isAppHidden();
     if (shouldRun && !this.timer) {
@@ -40,13 +52,4 @@ export class UptimeClock {
     const now = Date.now();
     this.listeners.forEach((fn) => fn(now));
   }
-}
-
-/** 42s, 3m 07s, 1h 04m */
-export function formatUptime(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ${String(s % 60).padStart(2, "0")}s`;
-  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
 }

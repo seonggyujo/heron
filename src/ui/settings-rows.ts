@@ -2,12 +2,13 @@ import { agentHooksOn, setAgentHooks } from "../app/agent-hooks";
 import { loadFontSize } from "../app/font-size";
 import { createLogger } from "../app/log";
 import { motionEnabled, setMotion } from "../app/motion";
-import { closeOnExitPref, restoreWorkspacePref } from "../app/prefs";
+import { closeOnExitPref, heronsPref, restoreWorkspacePref } from "../app/prefs";
 import { loadTheme, type Theme } from "../app/theme";
 import { hooksErrorText } from "../i18n/hooks-error";
 import { getLang, setLang, t } from "../i18n/lang";
 import { createConfirmButton } from "./confirm-button";
 import { createFontSizeControl } from "./font-size-control";
+import { createHeronCountToggle } from "./heron-count-toggle";
 import { createLangToggle } from "./lang-toggle";
 import { createSwitch } from "./switch";
 import { createThemeToggle } from "./theme-toggle";
@@ -49,6 +50,17 @@ function hooksRows(): HTMLElement[] {
   return [row(s.agentHooks, toggle), note];
 }
 
+/** Terminal herons per agent pane; the panes pick the change up within a second (pane/pane-herons.ts). */
+function heronsRow(): HTMLElement {
+  const s = t();
+  const toggle = createHeronCountToggle(heronsPref.get(), s.herons, s.heronsOff, (n) => {
+    log.info(`terminal herons ${n}`);
+    heronsPref.set(n);
+  });
+  toggle.title = s.heronsHint;
+  return row(s.herons, toggle);
+}
+
 function preferenceRows(actions: SettingsActions): HTMLElement[] {
   const s = t();
   return [
@@ -74,6 +86,7 @@ function preferenceRows(actions: SettingsActions): HTMLElement[] {
         setMotion(on);
       }),
     ),
+    heronsRow(),
     row(
       s.closeOnExit,
       createSwitch(s.closeOnExitHint, closeOnExitPref.get(), (on) => {

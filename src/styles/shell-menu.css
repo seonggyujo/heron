@@ -63,7 +63,8 @@
   text-align: left;
 }
 
-.shell-menu-item:hover {
+.shell-menu-item:hover,
+.shell-menu-item.keyed {
   background: var(--bg-hover);
   color: var(--fg);
 }

@@ -1,3 +1,4 @@
+import { span } from "../app/dom";
 import { createLogger } from "../app/log";
 import { folderName } from "../app/paths";
 import { t } from "../i18n/lang";
@@ -27,13 +28,6 @@ export interface AgentFolderMenu {
 function button(className: string, text = ""): HTMLButtonElement {
   const el = document.createElement("button");
   el.type = "button";
-  el.className = className;
-  el.textContent = text;
-  return el;
-}
-
-function span(className: string, text: string): HTMLSpanElement {
-  const el = document.createElement("span");
   el.className = className;
   el.textContent = text;
   return el;

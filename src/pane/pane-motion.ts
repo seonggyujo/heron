@@ -1,8 +1,7 @@
+import { EASE_OUT } from "../app/motion";
 import { motionAllowed } from "../app/visibility";
 
 // Pane enter/leave animations. Transform and opacity only.
-
-const EASE_OUT = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 /** Scale + fade in. */
 export function animateEnter(el: HTMLElement): void {

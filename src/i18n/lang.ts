@@ -13,7 +13,7 @@ const TABLES: Record<Lang, Strings> = { en, ko };
 const listeners = new Set<() => void>();
 
 /** Korean when the system's first language is Korean, else English. */
-export function systemLang(languages: readonly string[]): Lang {
+function systemLang(languages: readonly string[]): Lang {
   return languages[0]?.toLowerCase().startsWith("ko") ? "ko" : "en";
 }
 

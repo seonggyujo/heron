@@ -1,5 +1,6 @@
 /* App chrome color themes. The terminal itself is never themed.
-   Green is the default; <html data-theme="black"> switches to black.
+   Black is the default: <html data-theme="black"> (app/theme.ts, set before
+   the first paint); without it the :root list below is green.
    Every chrome color used in other style files must be one of these
    tokens, so a theme only needs to redefine this list. */
 
@@ -39,6 +40,17 @@
   --agent-need: #e6b450;
   --agent-done: #7fb8e6;
   --agent-bad: #ef6f6c;
+
+  /* What a working agent does (agent-activity.css), the same in both themes:
+     reads, searches, edits, runs a command, uses the web, starts a
+     subagent, anything else. */
+  --act-read: #7fb8e6;
+  --act-search: #a49be6;
+  --act-edit: #8fd8a8;
+  --act-run: #e6b450;
+  --act-web: #d89ad0;
+  --act-agent: #e69a7a;
+  --act-other: #8c8c94;
 }
 
 :root[data-theme="black"] {

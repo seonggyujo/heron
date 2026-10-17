@@ -1,3 +1,6 @@
+//! The input thread of one PTY: keystrokes in order, never blocking the
+//! caller.
+
 use std::io::Write;
 use std::sync::mpsc::{self, Sender};
 use std::thread;

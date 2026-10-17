@@ -1,5 +1,5 @@
 // App chrome theme (styles/themes.css). The terminal is never themed.
-// localStorage is a convenience only: any failure falls back to green.
+// localStorage is a convenience only: any failure falls back to black.
 
 export type Theme = "green" | "black";
 
@@ -7,11 +7,11 @@ const KEY = "heron.theme";
 
 export function loadTheme(): Theme {
   try {
-    if (localStorage.getItem(KEY) === "black") return "black";
+    if (localStorage.getItem(KEY) === "green") return "green";
   } catch {
     /* storage unavailable */
   }
-  return "green";
+  return "black";
 }
 
 export function applyTheme(theme: Theme): void {

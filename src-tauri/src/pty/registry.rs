@@ -1,3 +1,5 @@
+//! The live PTY sessions by id, and the next id.
+
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};

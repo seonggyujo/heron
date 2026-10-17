@@ -1,0 +1,12 @@
+/* The tokens line of a sidebar row (ui/agent-tokens.ts): small and quiet,
+   the numbers in fixed-width digits so they do not jitter as they grow.
+   Collapsed, it hides with the rest of the row's text (agent-item.css). */
+
+.agent-tokens {
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

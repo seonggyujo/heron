@@ -1,3 +1,6 @@
+/* The title bar (ui/titlebar.ts): logo on the left, the action buttons
+   and the Windows-order traffic lights on the right. */
+
 .titlebar {
   flex: none;
   height: var(--titlebar-h);

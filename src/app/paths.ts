@@ -1,4 +1,5 @@
-// Small path helpers shared by the pane and the agent dock.
+// Small path helpers: a folder's last name, whether Claude Code made it as
+// a worktree, and the name to show for it.
 
 /** A folder in a worktree Claude Code made: `<repo>\.claude\worktrees\<name>\...`. */
 const WORKTREE = /^(.*?)[\\/]\.claude[\\/]worktrees[\\/]([^\\/]+)/;

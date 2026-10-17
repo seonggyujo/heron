@@ -26,10 +26,8 @@ extern "system" {
     fn FlashWindowEx(info: *const FlashInfo) -> i32;
 }
 
-#[tauri::command]
-pub fn flash_taskbar(window: tauri::WebviewWindow) {
-    let Ok(hwnd) = window.hwnd() else { return };
-    let hwnd: *mut c_void = hwnd.0;
+/// Flashes the button of the window `hwnd`, unless it is in front.
+pub fn flash(hwnd: *mut c_void) {
     // SAFETY: plain user32 calls; `info` lives across the call.
     if unsafe { GetForegroundWindow() } == hwnd {
         return;
