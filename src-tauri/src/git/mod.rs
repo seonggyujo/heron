@@ -1,12 +1,15 @@
-//! What git says about a folder, for the agent sidebar: whether it is in a
-//! repository (a new agent can start in a worktree there) and how far the
-//! repository's working tree is from HEAD. Runs the git on PATH without a
-//! console window and without taking git's optional locks, so an agent's
-//! own git commands never meet a lock of ours.
+//! What git says about a folder, for the agent sidebar and the pane
+//! headers: whether it is in a repository (a new agent can start in a
+//! worktree there), the branch it is on, and how far the repository's
+//! working tree is from HEAD. Runs the git on PATH without a console window
+//! and without taking git's optional locks, so an agent's own git commands
+//! never meet a lock of ours.
 
+mod head;
 mod new_files;
 mod numstat;
 
+use std::fs;
 use std::path::Path;
 
 use crate::hidden_command::hidden_command;
@@ -22,6 +25,18 @@ const MAX_COUNTED_FILES: usize = 200;
 /// `dir` or above, with a `.git` folder (a repository) or file (a worktree).
 pub fn root(dir: &Path) -> Option<&Path> {
     dir.ancestors().find(|d| d.join(".git").exists())
+}
+
+/// The branch the working tree `dir` is in is on, or the short commit id of
+/// a detached HEAD. Read from the HEAD file, as it is asked at every prompt;
+/// git answers only when the file does not say (a reftable repository).
+/// None outside a repository.
+pub fn branch(dir: &Path) -> Option<String> {
+    let root = root(dir)?;
+    let dot_git = root.join(".git");
+    let git_dir = if dot_git.is_dir() { dot_git } else { head::linked_dir(root, &fs::read_to_string(&dot_git).ok()?)? };
+    let from_file = fs::read_to_string(git_dir.join("HEAD")).ok().and_then(|h| head::branch(&h));
+    from_file.or_else(|| Some(git(root, &["branch", "--show-current"])?.trim().to_owned()).filter(|b| !b.is_empty()))
 }
 
 /// Tracked changes since HEAD, staged or not, plus untracked files that are

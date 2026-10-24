@@ -1,7 +1,8 @@
 /* One row of the agent sidebar (ui/agent-item.ts): the pane number in a
-   badge of the state's color (agent-marks.css), folder, model, working
-   time, state line with the uncommitted line counts, and model warning. The
-   subagent lines are subagent-lines.css. Collapsed, only the badge shows. */
+   badge of the state's color (agent-marks.css), folder, git branch, model,
+   working time, state line with the uncommitted line counts, and model
+   warning. The subagent lines are subagent-lines.css. Collapsed, only the
+   badge shows. */
 
 .agent-item {
   display: flex;
@@ -57,6 +58,7 @@
 }
 
 .agent-name,
+.agent-branch,
 .agent-state,
 .agent-warn {
   overflow: hidden;
@@ -70,6 +72,20 @@
   color: var(--fg-soft);
   font-size: 15px;
   font-weight: 600;
+}
+
+/* The branch sits right after the folder and fills the gap before the
+   model; when the line runs short it gives way first. */
+.agent-name:has(+ .agent-branch) {
+  flex: 0 1 auto;
+}
+
+.agent-branch {
+  flex: 1 4 auto;
+  min-width: 0;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .agent-model {

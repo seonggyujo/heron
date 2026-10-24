@@ -20,6 +20,18 @@ pub fn git_changes(dir: String) -> Option<git::Changes> {
     }
 }
 
+/// The branch the folder `dir` is on. None outside a repository. Async: it
+/// reads files.
+#[tauri::command(async)]
+pub fn git_branch(dir: String) -> Option<String> {
+    let dir = Path::new(&dir);
+    if dir.is_dir() {
+        git::branch(dir)
+    } else {
+        None
+    }
+}
+
 /// For each folder, whether it is in a git repository.
 #[tauri::command(async)]
 pub fn git_repos(dirs: Vec<String>) -> Vec<bool> {

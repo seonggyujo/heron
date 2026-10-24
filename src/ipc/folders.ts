@@ -13,6 +13,9 @@ export interface Changes {
 /** Null outside a git repository, or when git cannot run. */
 export const gitChanges = (dir: string) => invoke<Changes | null>("git_changes", { dir });
 
+/** The branch, or a detached HEAD's short commit id; null outside a git repository. */
+export const gitBranch = (dir: string) => invoke<string | null>("git_branch", { dir });
+
 /** For each folder, whether it is in a git repository. */
 export const gitRepos = (dirs: string[]) => invoke<boolean[]>("git_repos", { dirs });
 

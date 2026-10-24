@@ -119,6 +119,11 @@ export class Pane implements PaneItem {
     this.header.setDoing(doing);
   }
 
+  /** The git branch of the folder in the header; null outside a repository. */
+  showBranch(branch: string | null): void {
+    this.header.setBranch(branch);
+  }
+
   setFocused(focused: boolean): void {
     this.el.classList.toggle("focused", focused);
   }

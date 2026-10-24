@@ -8,6 +8,7 @@ import type { UptimeClock } from "./app/uptime-clock";
 import { onLangChange } from "./i18n/lang";
 import { onAgentUpdate } from "./ipc/agent";
 import { flashTaskbar } from "./ipc/attention";
+import type { Pane } from "./pane/pane";
 import type { PaneDoing } from "./pane/pane-header";
 import type { PaneManager } from "./pane/pane-manager";
 import { markAgent, markHover, type PaneSignal } from "./pane/pane-signals";
@@ -16,13 +17,14 @@ import type { AgentRow } from "./ui/agent-item";
 import { createAgentSidebar, type SidebarParts } from "./ui/agent-sidebar";
 import { createTaskbarStatus } from "./ui/taskbar-status";
 import { createUsageBar } from "./ui/usage-bar";
-import { ChangeWatch } from "./wire-changes";
+import { GitWatch, type WatchedFolder } from "./wire-git";
 
 // Wiring only, like main.ts: agent updates and pane signals go into the
 // agent board; every change of the board redraws the sidebar (with each
-// folder's uncommitted changes from wire-changes.ts), the usage bar, the
-// pane dots, the panes' headers (what a working agent does) and terminal
-// herons, and the taskbar button's bar and number. An agent that needs the
+// folder's branch and uncommitted changes from wire-git.ts), the usage bar,
+// the pane dots, the panes' headers (the branch, what a working agent does)
+// and terminal herons, and the taskbar button's bar and number. A prompt
+// asks its folder's branch again. An agent that needs the
 // user or finishes flashes the taskbar button. The sidebar also holds the
 // "New agent" button and the recent sessions, which hear which sessions run
 // in panes.
@@ -78,7 +80,9 @@ export function wireAgents(
   );
   const usageBar = createUsageBar(clock, pick);
   const taskbar = createTaskbarStatus();
-  const changes = new ChangeWatch(clock, () => refresh());
+  const git = new GitWatch(clock, () => refresh());
+  /** A pane header's branch is its folder's, the shell's. */
+  const showBranch = (p: Pane) => p.showBranch(p.path ? git.branchOf(p.path) : null);
 
   const refresh = () => {
     const terminals = panes().terminals();
@@ -88,18 +92,23 @@ export function wireAgents(
       // The agent's own folder when the hooks report it, else the shell's.
       const path = agent.cwd ?? p.path;
       const folder = (path && folderLabel(path)) ?? p.folder;
-      return [{ pty: p.id, number: i + 1, folder, path, agent, changes: path ? changes.of(path) : null }];
+      const [changes, branch] = path ? [git.changesOf(path), git.branchOf(path)] : [null, null];
+      return [{ pty: p.id, number: i + 1, folder, path, agent, changes, branch }];
     });
     sidebar.render(rows, board.pluginSeen);
     usageBar.render(rows, board.limits);
     taskbar.render(rows.map((r) => r.agent.state));
-    changes.watch(rows.flatMap((r) => (r.path ? [{ pty: r.pty, folder: r.path, state: r.agent.state }] : [])));
     onRunning(rows.flatMap((r) => (r.agent.sessionId ? [r.agent.sessionId] : [])));
+    const watched: WatchedFolder[] = [];
     for (const p of terminals) {
       const agent = p.id === null ? undefined : board.get(p.id);
       markAgent(p.el, agent ? markOf(agent.state) : null);
       p.showAgent(agent ?? null, doingFor(agent));
+      showBranch(p);
+      const folder = agent?.cwd ?? p.path;
+      if (p.id !== null && folder) watched.push({ pty: p.id, folder, state: agent?.state ?? null });
     }
+    git.watch(watched);
   };
   board.subscribe((change) => {
     refresh();
@@ -122,8 +131,12 @@ export function wireAgents(
           return board.input(pty, signal.interrupt);
         case "focus":
           return board.seen(pty);
-        case "prompt":
+        case "prompt": {
+          // A cd may have left the branch the header shows: it takes the new folder's at once.
+          const pane = byPty(pty);
+          if (pane?.path) void git.askBranch(pane.path).then(() => showBranch(pane));
           return board.remove(pty);
+        }
         case "closed":
           return board.forget(pty);
       }

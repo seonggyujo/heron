@@ -1,5 +1,5 @@
-/* Pane header: dot, shell name, exit badge, folder, terminal title,
-   uptime, close button. */
+/* Pane header: dot, shell name, exit badge, folder, its git branch,
+   terminal title, uptime, close button. */
 
 .pane-header {
   flex: none;
@@ -81,7 +81,26 @@
   display: none;
 }
 
-.pane-cwd:not(:empty) + .pane-title:not(:empty)::before {
+/* Git branch of that folder. */
+.pane-branch {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 25%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--fg-muted);
+}
+
+.pane-branch::before {
+  content: "⎇ ";
+}
+
+.pane-branch:empty {
+  display: none;
+}
+
+.pane-cwd:not(:empty) ~ .pane-title:not(:empty)::before {
   content: "·";
   margin: 0 7px 0 1px;
   color: var(--fg-dim);

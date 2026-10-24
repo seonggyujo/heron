@@ -27,8 +27,8 @@ Built with Tauri v2, vanilla TypeScript, xterm.js (WebGL) and ConPTY.
 ### Coding agents
 
 The sidebar on the left has a row for each pane that runs a coding agent: the pane number in a badge of the agent's color, its folder and what the agent is doing
-(working, with a timer, or done). When the folder is a git repository, the row also counts the
-lines not committed yet (`+12 −3`). Agents that need you come first. Click a row to jump to that pane, or point at it to see which pane
+(working, with a timer, or done). When the folder is a git repository, the row also shows its branch and
+counts the lines not committed yet (`+12 −3`). Agents that need you come first. Click a row to jump to that pane, or point at it to see which pane
 it is; the pane's status dot takes the same color. While Heron is behind another window, its
 taskbar button flashes when an agent finishes or needs you, and keeps a moving bar while agents work
 (a full yellow one while one needs you) with the number working over the icon. While an agent works,
@@ -130,7 +130,7 @@ button appears in the title bar that brings back the automatic grid.
 
 The ▾ menu lists the shells installed on the machine (PowerShell 7, Windows PowerShell, cmd,
 Git Bash) and selects the one the **+** button opens. Each pane header shows the shell, its
-current folder, the title set by the running program, and how long it has been running.
+current folder and its git branch, the title set by the running program, and how long it has been running.
 
 ![Shell menu and pane header](docs/media/shells.gif)
 

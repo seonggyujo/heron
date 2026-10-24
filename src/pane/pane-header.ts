@@ -4,10 +4,10 @@ import { formatUptime } from "../app/durations";
 import type { UptimeClock } from "../app/uptime-clock";
 import { onLangChange, t } from "../i18n/lang";
 
-// Pane header DOM: status dot, shell name, exit badge, current folder,
-// terminal title (while an agent works, what it does in its place), uptime,
-// close button. Status lives here, never inside the terminal: the terminal
-// shows only what the shell prints.
+// Pane header DOM: status dot, shell name, exit badge, current folder, its
+// git branch, terminal title (while an agent works, what it does in its
+// place), uptime, close button. Status lives here, never inside the
+// terminal: the terminal shows only what the shell prints.
 
 /** What a working agent does now: its words, and the kind that colors the dot. */
 export interface PaneDoing {
@@ -23,6 +23,8 @@ export interface PaneHeader {
   setDoing(doing: PaneDoing | null): void;
   /** Current folder reported by the shell. */
   setCwd(path: string): void;
+  /** Git branch of that folder; null hides it. */
+  setBranch(branch: string | null): void;
   /** The shell started: count how long it runs, until it exits. */
   startUptime(): void;
   /** Shows the exit code, or a start failure when `code` is null. */
@@ -46,6 +48,7 @@ export function createPaneHeader(shellLabel: string, clock: UptimeClock, onClose
   const shell = span("pane-shell", shellLabel);
   const exit = span("pane-exit");
   const cwd = span("pane-cwd");
+  const branch = span("pane-branch");
   const title = span("pane-title");
   // The dot and its kind colors come from the sidebar's (agent-activity.css).
   const doing = span("pane-doing agent-doing");
@@ -75,7 +78,7 @@ export function createPaneHeader(shellLabel: string, clock: UptimeClock, onClose
     stopUptime = null;
   };
 
-  el.append(dot, shell, exit, cwd, title, doing, uptime, close);
+  el.append(dot, shell, exit, cwd, branch, title, doing, uptime, close);
   return {
     el,
     setTitle: (text) => setText(title, text),
@@ -87,6 +90,7 @@ export function createPaneHeader(shellLabel: string, clock: UptimeClock, onClose
       setText(doing, next.text);
     },
     setCwd: (path) => setText(cwd, path),
+    setBranch: (name) => setText(branch, name ?? ""),
     startUptime() {
       const startedAt = Date.now();
       stopUptime = clock.subscribe((now) => {

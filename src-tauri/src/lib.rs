@@ -90,6 +90,7 @@ pub fn run() {
             commands::claude::delete_session,
             commands::claude::resumable_sessions,
             commands::folders::git_changes,
+            commands::folders::git_branch,
             commands::folders::git_repos,
             commands::folders::pick_folder,
         ])
