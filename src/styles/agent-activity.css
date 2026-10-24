@@ -2,7 +2,7 @@
    in the color of its kind before the state line, and this turn's tools as
    small blocks, the running one outlined. Collapsed, they hide with the
    rest of the row's text (agent-item.css). The pane header shows the same
-   dot and words (pane/pane-header.ts, laid out in pane.css). */
+   dot and words (pane/pane-header.ts, laid out in pane-header-text.css). */
 
 .agent-doing {
   color: var(--fg-soft);

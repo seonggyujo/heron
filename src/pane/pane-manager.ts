@@ -5,13 +5,12 @@ import { Pane, type PaneOptions } from "./pane";
 import { PaneArranger } from "./pane-arranger";
 import { countPanes, type PaneCounts } from "./pane-counts";
 import { PaneFocus } from "./pane-focus";
-import type { PaneItem } from "./pane-item";
 import type { PaneSignal } from "./pane-signals";
 import { watchShellExits } from "./shell-exits";
 
 // Owns the list of terminal panes: add, close, font size. Which one is
 // selected is PaneFocus; where each pane sits, and how it moves there, is
-// up to PaneArranger.
+// up to PaneArranger, whose controls for the rest of the app are `layout`.
 
 const log = createLogger("panes");
 
@@ -26,6 +25,8 @@ export class PaneManager {
   private panes: Pane[] = [];
   private readonly focus = new PaneFocus((pane) => this.signal(pane, { kind: "focus" }));
   private readonly arranger: PaneArranger;
+  /** Back into the automatic grid, the user's own arrangement to save and put back, the pane under a point. */
+  readonly layout: Pick<PaneArranger, "tidy" | "shape" | "restore" | "paneAt">;
 
   constructor(
     private readonly workspace: HTMLElement,
@@ -38,6 +39,7 @@ export class PaneManager {
     private readonly onSignal: (pty: number, signal: PaneSignal) => void,
   ) {
     this.arranger = new PaneArranger(workspace, () => this.panes, onLayoutMode);
+    this.layout = this.arranger;
   }
 
   /** Subscribe to shell exits (shell-exits.ts). Call once before adding panes. */
@@ -91,21 +93,6 @@ export class PaneManager {
     this.arranger.remove(pane);
   }
 
-  /** Puts the panes back into the automatic grid. */
-  tidy(): void {
-    this.arranger.tidy();
-  }
-
-  /** The user's own arrangement in pane positions, to save; null in the automatic grid. */
-  layoutShape(): unknown {
-    return this.arranger.shape();
-  }
-
-  /** Puts back a saved arrangement of the panes; false when it does not fit them. */
-  restoreLayout(saved: unknown): boolean {
-    return this.arranger.restore(saved);
-  }
-
   setFontSize(px: number): void {
     this.fontSize = px;
     this.panes.forEach((p) => p.setFontSize(px));
@@ -126,11 +113,6 @@ export class PaneManager {
   /** Focuses the next (1) or previous (-1) pane in the order opened, going round. */
   focusStep(step: 1 | -1): void {
     this.focus.step(this.panes, step);
-  }
-
-  /** The pane under a point in CSS pixels, if any. */
-  paneAt(x: number, y: number): PaneItem | undefined {
-    return this.arranger.paneAt(x, y);
   }
 
   private insert(create: (cb: Pick<PaneOptions, "onClose" | "onFocus">) => Pane): Pane {

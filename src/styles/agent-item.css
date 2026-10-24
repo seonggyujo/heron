@@ -1,8 +1,8 @@
 /* One row of the agent sidebar (ui/agent-item.ts): the pane number in a
-   badge of the state's color (agent-marks.css), folder, git branch, model,
-   working time, state line with the uncommitted line counts, and model
-   warning. The subagent lines are subagent-lines.css. Collapsed, only the
-   badge shows. */
+   badge of the state's color (agent-marks.css), and the top line with the
+   folder, git branch, model and working time. The lines under it are
+   agent-state-line.css, the subagent lines subagent-lines.css. Collapsed,
+   only the badge shows. */
 
 .agent-item {
   display: flex;
@@ -58,9 +58,7 @@
 }
 
 .agent-name,
-.agent-branch,
-.agent-state,
-.agent-warn {
+.agent-branch {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -104,48 +102,6 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-}
-
-.agent-line {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-.agent-state {
-  min-width: 0;
-}
-
-.agent-line,
-.agent-warn {
-  font-size: 13px;
-}
-
-.agent-diff {
-  flex: none;
-  margin-left: auto;
-  display: flex;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.agent-added {
-  color: var(--agent-work);
-}
-
-.agent-removed {
-  color: var(--agent-bad);
-}
-
-.agent-item.need .agent-line {
-  color: var(--agent-need);
-}
-
-.agent-warn {
-  color: var(--agent-bad);
 }
 
 .agent-sidebar.collapsed .agent-body {

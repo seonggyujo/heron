@@ -78,39 +78,6 @@
   border-color: var(--border-strong);
 }
 
-.switch {
-  position: relative;
-  width: 34px;
-  height: 18px;
-  padding: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: var(--bg-inset);
-  transition: background-color 120ms, border-color 120ms;
-}
-
-.switch::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--fg-muted);
-  transition: transform 120ms ease-out, background-color 120ms;
-}
-
-.switch[aria-checked="true"] {
-  background: var(--bg-active);
-  border-color: var(--fg-dim);
-}
-
-.switch[aria-checked="true"]::after {
-  transform: translateX(16px);
-  background: var(--fg);
-}
-
 /* Between the preferences and the data actions. */
 .settings-sep {
   height: 1px;
@@ -130,11 +97,6 @@
   border-color: #6b2a2a;
   background: #3a1616;
   color: #ff8f8f;
-}
-
-.switch:disabled {
-  opacity: 0.6;
-  cursor: progress;
 }
 
 /* Why the switch above could not change, e.g. Claude Code too old. */

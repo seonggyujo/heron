@@ -74,7 +74,7 @@ async function main(): Promise<void> {
   const empty = createEmptyState(() => open(defaultShell));
   workspace.append(empty.el);
 
-  const tidy = createTidyButton(() => panes.tidy());
+  const tidy = createTidyButton(() => panes.layout.tidy());
   const panes = new PaneManager(
     workspace,
     clock,
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
   sessions.start();
   // "Open in Heron" while this window runs: a new pane in that folder.
   await onOpenFolder((dir) => open(defaultShell, dir));
-  await installFileDrop((x, y) => panes.paneAt(x, y));
+  await installFileDrop((x, y) => panes.layout.paneAt(x, y));
   installShortcuts({
     newPane: () => open(defaultShell),
     focusStep: (step) => panes.focusStep(step),

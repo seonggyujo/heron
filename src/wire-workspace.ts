@@ -36,7 +36,7 @@ export function wireWorkspace(
     panes: panes.terminals().map(
       (p): SavedPane => ({ shell: p.shell, cwd: p.path, session: p.id === null ? null : sessionOf(p.id) }),
     ),
-    layout: panes.layoutShape(),
+    layout: panes.layout.shape(),
   });
   const save = () => {
     const json = JSON.stringify(snapshot());
@@ -52,7 +52,7 @@ export function wireWorkspace(
     };
     // All panes and their arrangement first, then every shell at once at its final size.
     const opened = panes.insertAll(saved.panes.map((p) => ({ shell: p.shell, cwd: p.cwd, run: command(p.session) })));
-    const arranged = saved.layout !== null && panes.restoreLayout(saved.layout);
+    const arranged = saved.layout !== null && panes.layout.restore(saved.layout);
     await panes.startAll(opened);
     log.info(`reopened ${saved.panes.length} panes, ${resumable.size}/${ids.length} sessions resumed${arranged ? ", own layout" : ""}`);
   };

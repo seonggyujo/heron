@@ -1,0 +1,52 @@
+/* The lines under an agent row's top line (ui/agent-item.ts): the state, or
+   what the agent does (agent-activity.css), with the uncommitted line counts
+   at its end, and the model warning. */
+
+.agent-state,
+.agent-warn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.agent-state {
+  min-width: 0;
+}
+
+.agent-line,
+.agent-warn {
+  font-size: 13px;
+}
+
+.agent-diff {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.agent-added {
+  color: var(--agent-work);
+}
+
+.agent-removed {
+  color: var(--agent-bad);
+}
+
+.agent-item.need .agent-line {
+  color: var(--agent-need);
+}
+
+.agent-warn {
+  color: var(--agent-bad);
+}

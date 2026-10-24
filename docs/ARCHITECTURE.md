@@ -100,9 +100,10 @@
 | `terminal/links.ts` | 출력 속 URL과 OSC 8 링크를 Ctrl+클릭으로 브라우저에서 열기(opener 플러그인, http/https만. 앱이 마우스 추적 중이어도 링크 위 Ctrl+클릭은 앱에 넘기지 않음) |
 | `terminal/cwd.ts` | 셸이 보내는 현재 폴더 신호(OSC 9;9, OSC 7) 해석. 신호는 프롬프트마다 오므로 "프롬프트로 돌아옴"도 알린다. 새 폴더를 먼저 알리고 프롬프트를 알려서, 프롬프트를 듣는 쪽이 새 폴더를 읽는다 |
 | `pane/pane-item.ts` | 배치와 끌기가 pane(`pane.ts`)에 요구하는 것. 이 모듈들이 터미널에 직접 기대지 않게 한다 |
-| `pane/pane.ts` | 터미널 pane 하나: 틀(`pane-frame.ts`), TerminalView, PtyLink, 글로우, 터미널 속 왜가리(`pane-herons.ts`)를 묶는다. 에이전트 상태 색, 일하는 에이전트가 하는 일과 폴더의 브랜치(헤더), 셸의 현재 폴더 경로와 이름, 첫 프롬프트에 칠 명령(`start-command.ts`) |
+| `pane/pane.ts` | 터미널 pane 하나: 부품(`pane-parts.ts`)을 들고 앱이 pane에 묻고 시키는 일을 한다. 셸 시작과 종료 표시, 에이전트 상태 색, 일하는 에이전트가 하는 일과 폴더의 브랜치(헤더), 셸의 현재 폴더 경로와 이름 |
 | `pane/pane-frame.ts` | pane의 DOM: 헤더와 터미널이 그려질 상자를 담은 section. 헤더를 누르면 글자 선택 없이 그 pane에 포커스 |
 | `pane/start-command.ts` | 새 pane의 셸이 처음 프롬프트를 띄우면 명령을 사용자가 친 것처럼 입력한다(`claude`, `claude --resume <id>`). Heron이 띄우는 셸은 모두 프롬프트를 알려서(`pty/cwd_report.rs`) 셸 시작과 엇갈리지 않는다 |
+| `pane/pane-parts.ts` | pane 하나의 부품을 만들고 잇는다: 틀(`pane-frame.ts`), TerminalView, 출력이 오면 글로우를 켜는 PtyLink, 터미널 속 왜가리(`pane-herons.ts`), 터미널 제목과 폴더와 신호(`pane-signals.ts`, 첫 프롬프트에 칠 명령은 `start-command.ts`) |
 | `pane/pane-signals.ts` | 터미널 제목과 폴더를 헤더에, 신호(제목, 프롬프트, 키 입력과 그 키가 단독 Esc나 Ctrl+C인지, 포커스, 닫힘)를 에이전트 보드로. 에이전트 상태에 따른 점 색과 사이드바에서 가리킬 때의 테두리 class |
 | `pane/shell-exits.ts` | 셸 종료 처리: exit 0이면 pane 닫기(설정으로 끌 수 있음), 실패면 남기고 뱃지 |
 | `pane/pane-counts.ts` | 타이틀바 개수와 빈 화면용 숫자(터미널, 실행 중) |
@@ -115,7 +116,7 @@
 | `pane/heron-paint.ts` | 왜가리 그림을 캔버스에: 그림 글자를 테마 색 사각형으로(몸과 표시는 테마 토큰, 눈, 부리, 새끼, 반짝이, 나뭇가지는 고정 색), 가장자리를 기기 픽셀에 맞춰 이음매 없이 |
 | `pane/pane-drag.ts` | 헤더를 잡고 다른 pane에 놓기: 가장자리면 그쪽으로 분할, 가운데면 자리 교체, Esc 취소. Tauri 파일 드롭 때문에 HTML5 drag가 안 와서 pointer 이벤트와 pointer capture를 쓴다 |
 | `pane/file-drop.ts` | 파일을 pane에 끌어다 놓으면 경로를 입력(Windows Terminal 방식). Tauri 드래그 이벤트 사용 |
-| `pane/pane-manager.ts` | 터미널 pane 목록, 추가(첫 프롬프트에 칠 명령도)·닫기, 여러 pane을 먼저 놓고 셸은 나중에 한꺼번에(`insertAll`, `startAll`), 글씨 크기, 저장할 배치와 되살리기. pane 신호를 pty id와 함께 넘긴다. 선택은 `pane-focus.ts`, 자리는 `pane-arranger.ts`, 셸 종료는 `shell-exits.ts`에 맡긴다 |
+| `pane/pane-manager.ts` | 터미널 pane 목록, 추가(첫 프롬프트에 칠 명령도)·닫기, 여러 pane을 먼저 놓고 셸은 나중에 한꺼번에(`insertAll`, `startAll`), 글씨 크기. 배치 조작(자동 격자로 정리, 저장할 배치와 되살리기, 좌표 아래 pane)은 `layout`으로 `pane-arranger.ts`의 그 메서드만 내보인다. pane 신호를 pty id와 함께 넘긴다. 선택은 `pane-focus.ts`, 자리는 `pane-arranger.ts`, 셸 종료는 `shell-exits.ts`에 맡긴다 |
 | `pane/pane-focus.ts` | 선택된 pane(키보드를 가진 pane): 포커스를 받은 pane이 되고, Ctrl+Tab으로 연 순서대로 돈다 |
 | `pane/pane-arranger.ts` | pane이 놓이는 자리와 옮겨 가는 모습: `SplitLayout`으로 배치, 헤더 끌기(`pane-drag.ts`)로 옮기기, `flip`으로 미끄러지기, `FitScheduler`로 크기가 바뀐 pane만 다시 맞추기. 좌표 아래의 pane 찾기, 사용자 배치 저장과 되살리기 |
 | `buddy/sprites.ts`, `buddy/sprites-heron.ts` | 순수: 픽셀 그림. 왜가리 자세 8가지(서기, 걷기 둘, 쪼기, 날기 둘, 외다리 잠, 날개 펴기, 12×14), 새끼 3가지, 머리 위 표시(!, ?, z, 생각 점), 반짝이, 나뭇가지. 글자 하나가 픽셀 하나이고 색은 `pane/heron-paint.ts`가 정한다 |
@@ -139,7 +140,7 @@
 | `layout/fit-scheduler.ts` | ResizeObserver + requestAnimationFrame으로 fit을 묶음. 프레임당 10ms 예산, 남으면 다음 프레임 |
 | `layout/flip.ts` | 재배치 시 이전 위치에서 새 위치로 transform 애니메이션 |
 | `styles/stylesheets.ts` | 앱의 모든 스타일시트를 캐스케이드 순서대로 import(xterm, 테마 토큰과 기본 규칙, 기능별 파일) |
-| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히), `pane`(헤더의 제목과 하는 일, 왜가리 캔버스 층 포함), `split`(경계선, 드롭 미리보기), `settings`, `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄, 모델, 변경량), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 블록, 컨텍스트 칩), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
+| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히, pane 틀과 터미널 칸, 왜가리 캔버스 층), `pane-header`(헤더 틀, 점, 셸 이름, exit 뱃지, 실행 시간, 닫기), `pane-header-text`(헤더 가운데 글자: 폴더, 브랜치, 제목과 하는 일), `split`(경계선, 드롭 미리보기), `settings`, `switch`(설정의 켜기/끄기 스위치), `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄의 틀과 윗줄: 폴더, 브랜치, 모델, 시간), `agent-state-line`(그 아래 상태 줄과 변경량, 모델 경고), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 블록, 컨텍스트 칩), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
 
 의존 방향: `main.ts`, `wire-*.ts` → `ui/`, `pane/`, `layout/` → `buddy/` → `agent/`, `terminal/`, `ipc/`, `app/`, `i18n/`. (`ui/`, `pane/`, `layout/`은 `buddy/` 아래 모듈도 바로 쓴다.)
 `wire-*.ts`끼리는 `wire-agents.ts` → `wire-git.ts`만 있다. 나머지는 `main.ts`가 서로의 함수를 넘겨 잇는다.

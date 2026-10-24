@@ -1,0 +1,68 @@
+/* The text in the middle of the pane header (pane/pane-header.ts): the
+   folder, its git branch, and the terminal title or what a working agent
+   does. The header itself is pane-header.css. */
+
+/* Current folder reported by the shell. */
+.pane-cwd {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--fg-soft);
+}
+
+.pane-cwd:empty {
+  display: none;
+}
+
+/* Git branch of that folder. */
+.pane-branch {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 25%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--fg-muted);
+}
+
+.pane-branch::before {
+  content: "⎇ ";
+}
+
+.pane-branch:empty {
+  display: none;
+}
+
+/* Program-set title, or what a working agent does in its place (its dot
+   and kind colors in agent-activity.css): takes the free space, cut with an
+   ellipsis. */
+.pane-title,
+.pane-doing {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pane-title {
+  color: var(--fg-dim);
+}
+
+.pane-header:not(.doing) .pane-doing,
+.pane-header.doing .pane-title {
+  display: none;
+}
+
+.pane-cwd:not(:empty) ~ .pane-title:not(:empty)::before {
+  content: "·";
+  margin: 0 7px 0 1px;
+  color: var(--fg-dim);
+}
+
+.pane.focused .pane-title {
+  color: var(--fg-soft);
+}

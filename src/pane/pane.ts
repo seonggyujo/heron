@@ -4,21 +4,16 @@ import { folderName } from "../app/paths";
 import { SHELL_LABELS } from "../app/shells";
 import type { UptimeClock } from "../app/uptime-clock";
 import type { ShellKind } from "../ipc/pty";
-import { TerminalView } from "../terminal/terminal-view";
-import { OutputGlow } from "./output-glow";
-import { createPaneFrame } from "./pane-frame";
-import type { PaneDoing, PaneHeader } from "./pane-header";
-import { PaneHerons } from "./pane-herons";
+import type { PaneDoing } from "./pane-header";
 import type { PaneItem } from "./pane-item";
 import { animateEnter, animateLeave } from "./pane-motion";
-import { watchPaneTerminal, type PaneSignal } from "./pane-signals";
-import { PtyLink } from "./pty-link";
-import { typeAtFirstPrompt } from "./start-command";
+import { createPaneParts, type PaneParts } from "./pane-parts";
+import type { PaneSignal } from "./pane-signals";
 
-// One pane = frame (header and terminal box, pane-frame.ts) + xterm view +
-// PTY link, with the terminal herons over the view (pane-herons.ts). The
-// constructor only builds DOM; start() spawns the shell once the pane is
-// laid out in the grid, so the first PTY size is already right.
+// One pane: its parts (frame, xterm view, PTY link, glow, terminal herons;
+// built in pane-parts.ts) behind what the rest of the app asks of a pane.
+// The constructor only builds DOM; start() spawns the shell once the pane
+// is laid out in the grid, so the first PTY size is already right.
 
 const log = createLogger("pane");
 
@@ -40,37 +35,26 @@ export class Pane implements PaneItem {
   readonly el: HTMLElement;
   readonly shell: ShellKind;
   private readonly cwd: string | null;
-  private readonly header: PaneHeader;
-  private readonly view: TerminalView;
-  private readonly link: PtyLink;
-  private readonly glow: OutputGlow;
-  private readonly herons: PaneHerons;
-  /** Folder the shell last reported. */
-  private readonly where: () => string | null;
+  private readonly parts: PaneParts;
 
   constructor(parent: HTMLElement, opts: PaneOptions) {
     this.shell = opts.shell;
     this.cwd = opts.cwd;
-    const frame = createPaneFrame(parent, SHELL_LABELS[opts.shell], opts.clock, () => opts.onClose(this), () => this.focus());
-    this.el = frame.el;
-    this.header = frame.header;
-
-    this.view = new TerminalView(frame.host, opts.fontSize);
-    this.glow = new OutputGlow(this.el);
-    this.herons = new PaneHerons(this.view.term, opts.clock);
-    this.link = new PtyLink(this.view, () => this.glow.ping());
-
-    const type = (text: string) => this.view.term.input(text, true);
-    const emit = typeAtFirstPrompt(opts.run, type, (s) => opts.onSignal(this, s));
-    this.where = watchPaneTerminal(this.view.term, () => this.name, this.header, emit);
+    this.parts = createPaneParts(parent, opts, {
+      name: () => this.name,
+      close: () => opts.onClose(this),
+      focus: () => this.focus(),
+      signal: (s) => opts.onSignal(this, s),
+    });
+    this.el = this.parts.el;
     this.el.addEventListener("focusin", () => opts.onFocus(this));
   }
 
   async start(): Promise<void> {
-    const { cols, rows } = this.view.fit() ?? { cols: 80, rows: 24 };
+    const { cols, rows } = this.parts.view.fit() ?? { cols: 80, rows: 24 };
     try {
-      await this.link.spawn(this.shell, cols, rows, this.cwd);
-      this.header.startUptime();
+      await this.parts.link.spawn(this.shell, cols, rows, this.cwd);
+      this.parts.header.startUptime();
     } catch (err) {
       log.error(`spawn ${this.shell} failed`, err);
       this.markExited(null);
@@ -78,20 +62,20 @@ export class Pane implements PaneItem {
   }
 
   get id(): number | null {
-    return this.link.id;
+    return this.parts.link.id;
   }
 
   get name(): string {
-    return `pty ${this.link.id}`;
+    return `pty ${this.parts.link.id}`;
   }
 
   get running(): boolean {
-    return this.link.running;
+    return this.parts.link.running;
   }
 
   /** The folder the shell is in, as far as known; null = home. */
   get path(): string | null {
-    return this.where() ?? this.cwd;
+    return this.parts.where() ?? this.cwd;
   }
 
   /** Last folder name, e.g. "heron"; the shell name until one is known. */
@@ -101,27 +85,27 @@ export class Pane implements PaneItem {
 
   /** The header, where a drag to move the pane starts (pane-drag.ts). */
   get handle(): HTMLElement {
-    return this.header.el;
+    return this.parts.header.el;
   }
 
   fit(): void {
-    const size = this.view.fit();
-    if (size) this.link.resize(size.cols, size.rows);
+    const size = this.parts.view.fit();
+    if (size) this.parts.link.resize(size.cols, size.rows);
   }
 
   setFontSize(px: number): void {
-    this.view.setFontSize(px);
+    this.parts.view.setFontSize(px);
   }
 
   /** The coding agent in this pane, null for none: its herons act it out, the header says what it does. */
   showAgent(agent: Agent | null, doing: PaneDoing | null): void {
-    this.herons.show(agent);
-    this.header.setDoing(doing);
+    this.parts.herons.show(agent);
+    this.parts.header.setDoing(doing);
   }
 
   /** The git branch of the folder in the header; null outside a repository. */
   showBranch(branch: string | null): void {
-    this.header.setBranch(branch);
+    this.parts.header.setBranch(branch);
   }
 
   setFocused(focused: boolean): void {
@@ -129,21 +113,21 @@ export class Pane implements PaneItem {
   }
 
   focus(): void {
-    this.view.focus();
+    this.parts.view.focus();
   }
 
   /** Types text into the shell as a paste (bracketed paste when enabled). */
   paste(text: string): void {
-    this.view.paste(text);
+    this.parts.view.paste(text);
     this.focus();
   }
 
   /** The shell ended with `code`; null = it never started. */
   markExited(code: number | null): void {
     if (code !== null) log.info(`pty ${this.id} exited with code ${code}`);
-    this.link.markClosed();
+    this.parts.link.markClosed();
     this.el.classList.add("exited");
-    this.header.showExit(code);
+    this.parts.header.showExit(code);
   }
 
   enter(): void {
@@ -155,11 +139,12 @@ export class Pane implements PaneItem {
   }
 
   dispose(): void {
-    this.link.kill();
-    this.glow.dispose();
-    this.herons.dispose();
-    this.header.dispose();
-    this.view.dispose();
+    const { link, glow, herons, header, view } = this.parts;
+    link.kill();
+    glow.dispose();
+    herons.dispose();
+    header.dispose();
+    view.dispose();
     this.el.remove();
   }
 }
