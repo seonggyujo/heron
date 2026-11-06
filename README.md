@@ -27,8 +27,8 @@ Built with Tauri v2, vanilla TypeScript, xterm.js (WebGL) and ConPTY.
 ### Coding agents
 
 The sidebar on the left has a row for each pane that runs a coding agent: the pane number in a badge of the agent's color, its folder and what the agent is doing
-(working, with a timer, or done). When the folder is a git repository, the row also shows its branch and
-counts the lines not committed yet (`+12 −3`). Agents that need you come first. Click a row to jump to that pane, or point at it to see which pane
+(working, with a timer, or done). When the folder is a git repository, the row also counts the lines
+not committed yet (`+12 −3`). Agents that need you come first. Click a row to jump to that pane, or point at it to see which pane
 it is; the pane's status dot takes the same color. While Heron is behind another window, its
 taskbar button flashes when an agent finishes or needs you, and keeps a moving bar while agents work
 (a full yellow one while one needs you) with the number working over the icon. While an agent works,
@@ -51,8 +51,7 @@ to Claude Code's `~/.claude/settings.json` that run heron.exe itself, so there i
 install. This needs Claude Code 2.1.139 or later. Your own hooks stay as they are, and the previous
 file is kept as `settings.json.heron-backup`. Switching it off, or uninstalling Heron, takes
 the hooks out again; outside Heron they do nothing. With the hooks on, each row also shows the
-model the session runs (it follows `/model` within a second) and, under it, the subagents running
-now with how long each has run.
+subagents running now with how long each has run.
 
 The hooks also let Heron see what the agent is doing. While it works, its row says so
 ("editing main.ts", "running Run the tests", "thinking"), and under it this turn's tools pile up as small
@@ -73,11 +72,14 @@ about model switches. A session you resume (`claude --continue`, `--resume`) doe
 its model, so there Heron uses the model the heron-limits status line (below) shows; without the
 plugin, a resumed session is checked only after you switch models.
 
-Your 5-hour and weekly usage limits, and how full each agent's context window is, reach only
-Claude Code's status line. The **heron-limits** plugin in this repository ([plugin/](plugin/))
+Your 5-hour and weekly usage limits, how full each agent's context window is, and the reasoning
+effort each session runs with reach only Claude Code's status line. The **heron-limits** plugin in this repository ([plugin/](plugin/))
 passes them to Heron, which shows them in a bar along the bottom of the window: each limit with
-the time until it resets, and a chip per agent with its context use (yellow from 70%, red from
-90%). Your status line shows the same as before. In Claude Code:
+the time until it resets, and a card per agent with its folder, git branch, model (it follows
+`/model` within a second), reasoning effort (`/effort`) and context use (yellow from 70%, red
+from 90%). Without the plugin the cards still show the folder and branch, and the model when the hooks are
+on. Your status line
+shows the same as before. In Claude Code:
 
 ```
 /plugin marketplace add seonggyujo/heron

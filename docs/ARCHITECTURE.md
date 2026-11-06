@@ -19,8 +19,8 @@
 | `wire-workspace.ts` | 연결만: 지난 작업. 시작할 때(설정 > 지난 작업 다시 열기) 저장된 pane을 셸과 폴더 그대로 모두 놓고 사용자 배치를 되살린 다음, 셸을 한꺼번에 띄운다(셸마다 처음부터 제 크기로). Claude Code가 돌던 pane은 그 세션을 이어 열고, 이어 열 수 없으면(메시지가 없어 저장되지 않았거나 다른 곳에서 실행 중) 새 `claude`를 연다. 그다음 "Open in Heron" 폴더, 아무것도 없으면 home에 pane 하나. 실행 중에는 시계가 돌 때마다 지금 상태를 저장한다(바뀐 때만) |
 | `agent/agent-model.ts` | 순수 함수: pane 하나의 에이전트(`Agent`)와 그 상태(쉬는 중, 작업 중, 권한 필요, 질문, 입력 대기, 끝남), 작업 폴더, 세션 id(최근 세션에서 빼려고), 급한 순서, 상태별 색. 상태를 정하는 신호: Heron 훅이 쓴 상태(정확), 터미널 제목(`✳`은 쉬는 중, `◐◑`는 작업 중. 아무것도 설치하지 않아도 동작), pane의 키 입력과 포커스. 그 밖의 소식은 `agent-reports.ts`가 붙인다. 훅이 한 번 보고하면 훅이 상태를 정한다. 단 Esc나 Ctrl+C는 작업을 멈춘 것으로 본다(Claude Code는 중단된 턴에 Stop 훅을 보내지 않는다). 작업 표시줄을 깜빡일 변화인지도 여기서 정한다 |
 | `agent/taskbar-state.ts` | 순수 함수: 모든 에이전트 상태로 작업 표시줄 버튼에 보일 것. 하나라도 일하면 흐르는 막대, 하나라도 나를 기다리면(이쪽이 이긴다) 가득 찬 노란 막대, 일하는 에이전트 수 |
-| `agent/agent-reports.ts` | 순수 함수: 백엔드와 플러그인의 소식을 에이전트에 붙인다. heron-limits 플러그인의 컨텍스트 사용률, 실행 중인 서브에이전트, 백엔드의 모델 확인, 활동(`activity.ts`), 토큰(`tokens.ts`) |
-| `agent/usage.ts` | 순수 함수: heron-limits 플러그인의 상태 파일에서 계정의 사용 한도(5시간, 주간)와 컨텍스트 사용률, 막대 색(70%부터 노랑, 90%부터 빨강). 한도가 하나도 없는 상태 파일(새 세션의 첫 응답 전)은 한도로 치지 않아서 마지막 한도가 화면에 남는다. 쓴 시각만 다른 한도는 같은 것으로 본다 |
+| `agent/agent-reports.ts` | 순수 함수: 백엔드와 플러그인의 소식을 에이전트에 붙인다. heron-limits 플러그인의 컨텍스트 사용률과 추론 설정값(effort), 실행 중인 서브에이전트, 백엔드의 모델 확인, 활동(`activity.ts`), 토큰(`tokens.ts`) |
+| `agent/usage.ts` | 순수 함수: heron-limits 플러그인의 상태 파일에서 계정의 사용 한도(5시간, 주간), 컨텍스트 사용률, 세션의 추론 설정값(`/effort`, 모델이 지원하지 않으면 없음), 막대 색(70%부터 노랑, 90%부터 빨강). 한도가 하나도 없는 상태 파일(새 세션의 첫 응답 전)은 한도로 치지 않아서 마지막 한도가 화면에 남는다. 쓴 시각만 다른 한도는 같은 것으로 본다 |
 | `agent/subagents.ts` | 순수 함수: 백엔드가 보낸 실행 중인 서브에이전트 목록(id, 종류, 시작 시각) |
 | `agent/activity.ts` | 순수 함수: 백엔드가 기록 파일에서 읽은 활동(지금 단계: 생각, 답 쓰기, 도구와 그 대상. 이번 턴의 도구 호출) 검사, 도구 종류(읽기, 찾기, 수정, 실행, 웹, 서브에이전트, 그 밖), 지금 하는 일(사이드바 색과 왜가리 몸짓이 쓴다) |
 | `agent/tokens.ts` | 순수 함수: 백엔드가 기록 파일에서 센 토큰(세션 전체와 이번 턴, 입력, 출력, 캐시 쓰기, 캐시 읽기) 검사, 합계, 짧은 표시("12.3k", "1.24M") |
@@ -66,7 +66,7 @@
 | `ui/empty-state.ts` | 터미널 0개일 때 큰 + 버튼과 깜빡이는 `_` |
 | `ui/agent-sidebar.ts` | 왼쪽 사이드바, 늘 보인다: 맨 위 "새 에이전트" 버튼, 에이전트가 있는 pane을 급한 순(나를 기다림, 끝남, 작업 중, 쉬는 중)으로(없으면 없다는 한 줄), 최근 세션, 맨 아래에 안내(`agent-hints.ts`). 버튼과 최근 세션은 `wire-sessions.ts`가 만들어 넘긴다. 번호 배지만 남게 접을 수 있고 기억한다. 줄은 보드가 바뀔 때만 새로 만들고, 1초 갱신은 경과 시간만 바꾼다 |
 | `ui/agent-hints.ts` | 사이드바 맨 아래 안내: 먼저 Heron의 Claude Code 훅 켜기 제안(못 켜면 이유), 훅이 켜지거나 제안을 닫으면 heron-limits 플러그인 안내. 각각 × 로 영영 닫는다 |
-| `ui/agent-item.ts` | 사이드바 한 줄: 상태 색 배지에 든 pane 번호, 폴더, 폴더의 git 브랜치(줄이 좁으면 먼저 줄어든다), 세션의 모델(`/model`로 바꾸면 다음 폴링에 따라 바뀐다), 경과 시간, 상태(권한 요청과 질문이면 무엇인지도. 작업 중이면 지금 하는 일), 이번 턴의 도구 블록, 토큰, 커밋하지 않은 줄 수(+12 −3), 모델 경고, 실행 중인 서브에이전트. 누르면 그 pane으로, 마우스를 올리면 그 pane 강조 |
+| `ui/agent-item.ts` | 사이드바 한 줄: 상태 색 배지에 든 pane 번호, 폴더, 경과 시간, 상태(권한 요청과 질문이면 무엇인지도. 작업 중이면 지금 하는 일), 이번 턴의 도구 블록, 토큰, 커밋하지 않은 줄 수(+12 −3), 모델 경고, 실행 중인 서브에이전트. 누르면 그 pane으로, 마우스를 올리면 그 pane 강조 |
 | `ui/agent-activity.ts` | 사이드바 줄의 활동: 작업 중이면 상태 대신 "main.ts 고치는 중"처럼 지금 하는 일(앞의 점은 종류 색), 그 아래 이번 턴의 도구를 종류 색 블록으로(실행 중인 것은 테두리), 툴팁에 최근 도구. 하는 일의 글(`doingText`)은 pane 헤더도 쓴다(`wire-agents.ts`가 넘긴다) |
 | `ui/agent-tokens.ts` | 사이드바 줄의 토큰: "토큰 1.24M · 이번 턴 38.2k", 툴팁에 세션과 이번 턴의 종류별 토큰 |
 | `ui/subagent-lines.ts` | 사이드바 줄 아래의 서브에이전트: "↳ 종류 실행 시간", 오래된 것부터 셋까지, 나머지는 "외 N개" |
@@ -75,9 +75,10 @@
 | `ui/recent-sessions.ts` | 사이드바의 최근 세션: 폴더별로 묶고(`agent/session-groups.ts`), 위가 오래된 것, 아래가 최신이고 처음엔 최신이 보인다. 폴더는 머리를 눌러 접고 펴며, 접은 폴더는 기억한다. 스크롤바 없이 휠로 움직이고, 가려진 쪽 가장자리를 흐리게 해서 "↑ 3개 더"처럼 센다. 접으면 숨는다 |
 | `ui/recent-group-head.ts` | 최근 세션의 폴더 머리: 화살표, 폴더 이름(worktree면 "저장소 · 이름"), 세션 수, 가장 최근 시각. 누르면 접고 편다 |
 | `ui/recent-session-row.ts` | 최근 세션 한 줄(폴더 머리 아래): 제목과 얼마 전. 마우스를 올리면 시간 대신 "이어 열기", 누르면 연다. 오른쪽 클릭하면 줄 위에 "삭제할까요? [삭제] [취소]"(휴지통으로)(Esc나 바깥 클릭은 취소), 실패하면 잠깐 이유를 보인다 |
-| `ui/usage-bar.ts` | 창 아래 하단바(heron-limits 플러그인): 한도 블록 두 개와 에이전트마다 컨텍스트 사용률 칩(pane 순서, 누르면 그 pane으로). 한도도 컨텍스트도 없으면 숨고, 한도가 있을 때만 1초 시계를 구독한다 |
+| `ui/usage-bar.ts` | 창 아래 하단바: 왼쪽에 한도 두 줄(heron-limits 플러그인), 오른쪽에 에이전트마다 카드(`usage-card.ts`, pane 순서). 한도도 에이전트도 없으면 숨고, 한도가 있을 때만 1초 시계를 구독한다 |
+| `ui/usage-card.ts` | 하단바의 에이전트 카드 하나: pane 번호, 폴더, git 브랜치, 세션의 모델(`/model`로 바꾸면 다음 폴링에 따라 바뀐다), 추론 설정값, 컨텍스트 사용률과 막대(70%부터 노랑, 90%부터 빨강). 모르는 값은 뺀다. 누르면 그 pane으로 |
 | `ui/taskbar-status.ts` | 작업 표시줄 버튼의 에이전트(`agent/taskbar-state.ts`): 일하면 흐르는 막대, 나를 기다리면 노란 막대, 아이콘 위에 일하는 수를 작업 중 색 동그라미로(캔버스에 화면 배율대로 그려 RGBA로). Windows가 그리므로 페이지에서 도는 애니메이션은 없다. 바뀐 것만, 앞의 호출이 끝난 뒤 차례로 보낸다. 처음엔 모름으로 시작해서 페이지를 다시 읽으면 남은 막대를 바로잡는다 |
-| `ui/limit-meter.ts` | 하단바의 한도 하나(5시간, 주간): 이름, 초기화까지 남은 시간, 큰 사용률 숫자와 막대. 70%부터 노랑, 90%부터 빨강 |
+| `ui/limit-meter.ts` | 하단바의 한도 하나(5시간, 주간)를 한 줄로: 이름, 사용률, 막대, 초기화까지 남은 시간. 70%부터 노랑, 90%부터 빨강 |
 | `i18n/en.ts` | 화면에 보이는 모든 글자의 영어 표와 그 키 타입(`Strings`). 셸 이름과 로그는 번역하지 않는다 |
 | `i18n/ko.ts` | 같은 키의 한국어 표 |
 | `i18n/hooks-error.ts` | Claude Code 훅 명령의 오류 코드를 문장으로 |
@@ -140,7 +141,7 @@
 | `layout/fit-scheduler.ts` | ResizeObserver + requestAnimationFrame으로 fit을 묶음. 프레임당 10ms 예산, 남으면 다음 프레임 |
 | `layout/flip.ts` | 재배치 시 이전 위치에서 새 위치로 transform 애니메이션 |
 | `styles/stylesheets.ts` | 앱의 모든 스타일시트를 캐스케이드 순서대로 import(xterm, 테마 토큰과 기본 규칙, 기능별 파일) |
-| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히, pane 틀과 터미널 칸, 왜가리 캔버스 층), `pane-header`(헤더 틀, 점, 셸 이름, exit 뱃지, 실행 시간, 닫기), `pane-header-text`(헤더 가운데 글자: 폴더, 브랜치, 제목과 하는 일), `split`(경계선, 드롭 미리보기), `settings`, `switch`(설정의 켜기/끄기 스위치), `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄의 틀과 윗줄: 폴더, 브랜치, 모델, 시간), `agent-state-line`(그 아래 상태 줄과 변경량, 모델 경고), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 블록, 컨텍스트 칩), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
+| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히, pane 틀과 터미널 칸, 왜가리 캔버스 층), `pane-header`(헤더 틀, 점, 셸 이름, exit 뱃지, 실행 시간, 닫기), `pane-header-text`(헤더 가운데 글자: 폴더, 브랜치, 제목과 하는 일), `split`(경계선, 드롭 미리보기), `settings`, `switch`(설정의 켜기/끄기 스위치), `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄의 틀과 윗줄: 폴더, 시간), `agent-state-line`(그 아래 상태 줄과 변경량, 모델 경고), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 두 줄, 카드 줄), `usage-card`(에이전트 카드), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
 
 의존 방향: `main.ts`, `wire-*.ts` → `ui/`, `pane/`, `layout/` → `buddy/` → `agent/`, `terminal/`, `ipc/`, `app/`, `i18n/`. (`ui/`, `pane/`, `layout/`은 `buddy/` 아래 모듈도 바로 쓴다.)
 `wire-*.ts`끼리는 `wire-agents.ts` → `wire-git.ts`만 있다. 나머지는 `main.ts`가 서로의 함수를 넘겨 잇는다.
@@ -222,7 +223,7 @@
 
 ## 플러그인 `plugin/` (heron-limits)
 
-Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍스트 사용률)을 Heron에 넘기는 Claude Code 플러그인.
+Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍스트 사용률, 추론 설정값)을 Heron에 넘기는 Claude Code 플러그인.
 저장소 맨 위 `.claude-plugin/marketplace.json`이 이 저장소를 마켓플레이스 `heron`으로 만들고, 플러그인은 `./plugin`을 가리킨다
 (`/plugin marketplace add seonggyujo/heron`, `/plugin install heron-limits@heron`). Heron 앱과 따로 버전을 매긴다(`plugin/.claude-plugin/plugin.json`).
 
@@ -230,7 +231,7 @@ Claude Code가 상태줄로만 주는 값(5시간·주간 사용 한도, 컨텍�
 | --- | --- |
 | `setup.js` | `sync`(SessionStart 훅): 상태줄 자리를 가져오고, 쓰던 상태줄은 저장해서 우리 것 안에서 돌린다(`refreshInterval`, `padding`은 그대로). 설치된 사본을 플러그인 버전에 맞춘다. `first-run`(UserPromptSubmit 훅): 처음 한 번만 `sync`. `disable`: 쓰던 상태줄을 돌려놓고 사본을 지운다. settings.json은 `~/.claude/heron-limits/`의 사본을 가리킨다(플러그인 폴더는 버전마다 바뀌고, 플러그인을 지워도 사본은 계속 돈다) |
 | `statusline.js` | 상태줄 진입점: Heron pane 안이면 `heron-file.js`로 파일을 쓰고, `previous.js`가 돌린 쓰던 상태줄의 출력을 그대로 찍는다. 없으면 아무것도 찍지 않는다 |
-| `heron-file.js` | `<키>.status.json`에 한도(사용률, 초기화 시각), 컨텍스트 사용률, 선택 모델(`model.id`, 훅이 모르는 이어서 연 세션용). pane 키 모양이 아니면 쓰지 않는다 |
+| `heron-file.js` | `<키>.status.json`에 한도(사용률, 초기화 시각), 컨텍스트 사용률, 추론 설정값(`effort.level`, 모델이 지원하지 않으면 null), 선택 모델(`model.id`, 훅이 모르는 이어서 연 세션용). pane 키 모양이 아니면 쓰지 않는다 |
 | `previous.js` | 저장한 사용자 상태줄을 같은 입력으로 실행(Git Bash, 없으면 기본 셸). 3초 안에 끝나지 않거나 실패하면 출력 없음. 저장 파일 이름(`setup.js`가 쓴다) |
 | `replace-file.js` | 파일을 한 번에 바꾸기(임시 파일에 쓰고 이름 바꾸기). `setup.js`와 `heron-file.js`가 쓴다 |
 | `skills/disable/` | `/heron-limits:disable` |

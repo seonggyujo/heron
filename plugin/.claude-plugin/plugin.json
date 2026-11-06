@@ -1,6 +1,6 @@
 {
   "name": "heron-limits",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Shows Claude Code's usage limits and context use in Heron, which can get them only from the status line",
   "author": {
     "name": "seonggyujo"

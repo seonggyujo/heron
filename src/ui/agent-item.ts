@@ -9,7 +9,7 @@ import { createTokenLine, tokenTips } from "./agent-tokens";
 import { createSubagentLines } from "./subagent-lines";
 
 // One row of the agent sidebar:
-//   [1] heron ⎇ main   Opus 5.5   2m 14s
+//   [1] heron                 2m 14s
 //       needs permission · Bash: cargo test     +12 −3
 //       ▪▪▪▪▪▫
 //       1.24M tokens · 38.2k this turn
@@ -18,10 +18,12 @@ import { createSubagentLines } from "./subagent-lines";
 // The pane number's badge takes the state's color. While it works, the
 // state line says what it does ("● editing main.ts"), and the blocks are
 // this turn's tools (agent-activity.ts), the tokens line what the session
-// and the turn used (agent-tokens.ts). The branch is the folder's, the
-// model the session's, the counts the folder's uncommitted lines, the last
-// lines its running subagents (subagent-lines.ts). Collapsed, only the
-// badge shows; the tooltip says the rest.
+// and the turn used (agent-tokens.ts). The counts are the folder's
+// uncommitted lines, the warning names a model that answered other than
+// the selected one, the last lines are its running subagents
+// (subagent-lines.ts). The branch and the model show in the usage bar's
+// card (usage-card.ts). Collapsed, only the badge shows; the tooltip says
+// the rest.
 
 export interface AgentRow {
   pty: number;
@@ -69,12 +71,7 @@ export function createAgentItem(row: AgentRow, onPick: (pty: number) => void, on
 
   const time = span("agent-time");
   const top = span("agent-top");
-  top.append(span("agent-name", row.folder));
-  if (row.branch) top.append(span("agent-branch", `⎇ ${row.branch}`));
-  // The model the session runs with; it follows /model within a poll.
-  const model = a.check?.selected ?? a.check?.actual ?? null;
-  if (model) top.append(span("agent-model", modelLabel(model)));
-  top.append(time);
+  top.append(span("agent-name", row.folder), time);
   const line = span("agent-line");
   // While it works, what it does now (agent-activity.ts).
   const step = a.state === "working" ? a.activity?.step : null;

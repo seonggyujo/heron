@@ -34,6 +34,8 @@ export interface Agent {
   check: ModelCheck | null;
   /** Percent of the context window in use (heron-limits plugin). */
   context: number | null;
+  /** The session's reasoning effort, e.g. "high" (heron-limits plugin); null when unknown or the model takes none. */
+  effort: string | null;
   /** The agent's working folder (from the hooks). */
   cwd: string | null;
   /** Claude Code's session id (from the hooks): left out of the recent sessions, resumed after a restart. */
@@ -59,6 +61,7 @@ export const newAgent = (now: number): Agent => ({
   message: null,
   check: null,
   context: null,
+  effort: null,
   cwd: null,
   sessionId: null,
   subagents: [],

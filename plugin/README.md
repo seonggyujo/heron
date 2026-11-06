@@ -2,10 +2,11 @@
 
 A Claude Code plugin for [Heron](https://github.com/seonggyujo/heron). Heron's own hooks tell it
 what each agent is doing and which model answered, but some things reach only Claude Code's
-status line: the 5-hour and weekly usage limits, how full each agent's context window is, and the
-selected model of a session you resumed. This plugin passes those to Heron, which shows the
-limits and the context use in the bar along the bottom of its window and checks the answers of
-resumed sessions against that model.
+status line: the 5-hour and weekly usage limits, how full each agent's context window is, the
+reasoning effort each session runs with (`/effort`), and the selected model of a session you
+resumed. This plugin passes those to Heron, which shows the limits, the context use and the effort
+in the bar along the bottom of its window and checks the answers of resumed sessions against that
+model.
 
 ## Install
 
@@ -39,7 +40,8 @@ claude plugin update heron-limits@heron
 The next session start puts the new status line script in `~/.claude/heron-limits/`.
 
 Inside a Heron pane the script also writes `<pane>.status.json` in the folder Heron names
-(`HERON_AGENT_DIR`): the limits with their reset times, the context use, and the selected model.
+(`HERON_AGENT_DIR`): the limits with their reset times, the context use, the effort level, and the
+selected model.
 Outside Heron it writes nothing. The file stays on your machine.
 
 ## Uninstall

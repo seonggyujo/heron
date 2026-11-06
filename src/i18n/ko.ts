@@ -70,7 +70,7 @@ export const ko: Strings = {
   tokensTurn: "이번 턴",
   tokenKinds: (input, output, write, read) => `입력 ${input} · 출력 ${output} · 캐시 쓰기 ${write} · 캐시 읽기 ${read}`,
   agentMismatch: (selected, actual) => `선택 ${selected}, 실제 응답 ${actual}`,
-  agentPluginHint: "heron-limits 플러그인을 설치하면 사용 한도와 컨텍스트 사용량도 보여요",
+  agentPluginHint: "heron-limits 플러그인을 설치하면 사용 한도, 컨텍스트 사용량, 추론 설정값도 보여요",
   hooksOffer: "권한 요청, 질문, 모델 확인도 볼 수 있어요. Claude Code의 settings.json에 Heron 훅을 추가해요.",
   hooksTurnOn: "켜기",
   hooksTurningOn: "켜는 중…",
@@ -104,6 +104,6 @@ export const ko: Strings = {
   limitFiveHour: "5시간 한도",
   limitWeekly: "주간 한도",
   limitResets: (left) => `${left} 뒤 초기화`,
-  context: "컨텍스트",
   contextUsed: (folder, percent) => `${folder}: 컨텍스트 창의 ${percent}% 사용`,
+  effortLevel: (level) => `추론 설정: ${level}`,
 };

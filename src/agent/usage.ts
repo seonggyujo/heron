@@ -1,8 +1,9 @@
 // The heron-limits plugin's status file for one pane: the account's usage
-// limits (5-hour and weekly) and how much of its context window the
-// agent uses. Pure: the file comes in unchecked (ipc/agent.ts).
+// limits (5-hour and weekly), how much of its context window the agent
+// uses, and the reasoning effort its session runs with. Pure: the file
+// comes in unchecked (ipc/agent.ts).
 
-import { fieldsOf, numberOf } from "../app/unchecked";
+import { fieldsOf, numberOf, textOf } from "../app/unchecked";
 
 export interface Limit {
   used: number;
@@ -39,6 +40,11 @@ export function limitsOf(data: unknown): Limits | null {
 /** Percent of the context window in use, or null before the first answer. */
 export function contextOf(data: unknown): number | null {
   return numberOf(fieldsOf(data).context);
+}
+
+/** The session's effort level (`/effort`: low ... max), or null when its model takes none. */
+export function effortOf(data: unknown): string | null {
+  return textOf(fieldsOf(data).effort);
 }
 
 /** The same on screen: the same use and reset of each limit, whenever written. */

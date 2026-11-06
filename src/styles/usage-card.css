@@ -1,0 +1,119 @@
+/* One agent's card in the usage bar (ui/usage-card.ts): pane number,
+   folder and branch on top; model, effort and context use below. A long
+   folder or branch gives way first; the context meter never shrinks. */
+
+.usage-card {
+  flex: none;
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-soft);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.usage-card:hover {
+  background: var(--bg-hover);
+}
+
+.card-top,
+.card-bottom {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.card-n {
+  flex: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.card-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.card-branch {
+  flex: 1 4 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.card-model,
+.card-effort {
+  flex: none;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.card-model + .card-effort::before {
+  content: "· ";
+  color: var(--fg-muted);
+}
+
+.card-context {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-used {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--agent-work);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-track {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+
+.card-fill {
+  display: block;
+  height: 100%;
+  background: var(--agent-work);
+}
+
+.card-context.warn .card-used {
+  color: var(--agent-need);
+}
+
+.card-context.warn .card-fill {
+  background: var(--agent-need);
+}
+
+.card-context.bad .card-used {
+  color: var(--agent-bad);
+}
+
+.card-context.bad .card-fill {
+  background: var(--agent-bad);
+}

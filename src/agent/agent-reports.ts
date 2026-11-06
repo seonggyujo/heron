@@ -1,19 +1,21 @@
 // What the backend and the heron-limits plugin report about a pane's agent
 // besides its state (agent-model.ts), each applied to the agent: context
-// use, the subagents running, the model check, the activity and the tokens.
-// Pure.
+// use and effort, the subagents running, the model check, the activity and
+// the tokens. Pure.
 
 import { fieldsOf, textOf } from "../app/unchecked";
 import { activityOf } from "./activity";
 import { newAgent, type Agent } from "./agent-model";
 import { subagentsOf } from "./subagents";
 import { tokensOf } from "./tokens";
-import { contextOf } from "./usage";
+import { contextOf, effortOf } from "./usage";
 
-/** The plugin's status line file: context use. Its limits: usage.ts. */
+/** The plugin's status line file: context use and effort. Its limits: usage.ts. */
 export function applyStatus(prev: Agent | undefined, data: unknown, now: number): Agent {
   const context = contextOf(data);
-  return prev && prev.context === context ? prev : { ...(prev ?? newAgent(now)), context };
+  const effort = effortOf(data);
+  if (prev && prev.context === context && prev.effort === effort) return prev;
+  return { ...(prev ?? newAgent(now)), context, effort };
 }
 
 /** The subagents running now. Only for a pane that has an agent. */

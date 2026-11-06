@@ -1,14 +1,16 @@
-import { fillOf, type Limits } from "../agent/usage";
+import type { Limits } from "../agent/usage";
 import type { UptimeClock } from "../app/uptime-clock";
 import { onLangChange, t } from "../i18n/lang";
 import type { AgentRow } from "./agent-item";
 import { createLimitMeter } from "./limit-meter";
+import { createUsageCard } from "./usage-card";
 
-// The bar along the bottom of the window, from the heron-limits plugin:
-//   5-hour limit  resets in 2h 13m | Weekly limit  resets in 4d 2h | Context
-//   58% ━━━━━━────                 | 21% ━━────────              | [1 heron 34%] [2 api 71%]
-// Each context chip is one agent, in pane order; clicking it goes to that
-// pane. Hidden while there is neither a limit nor a context figure.
+// The bar along the bottom of the window:
+//   5-hour limit 58% ━━━━── resets in 2h 13m │ [1 heron  ⎇ main        ] [2 api  ⎇ feat/login    ]
+//   Weekly limit 21% ━───── resets in 4d 2h  │ [Opus 5.5 · high  34% ━━] [Sonnet 5.5 · max 71% ━━]
+// The limits come from the heron-limits plugin; each card is one agent, in
+// pane order (usage-card.ts), and clicking it goes to that pane. Hidden
+// while there is neither a limit nor an agent.
 
 export interface UsageBar {
   el: HTMLElement;
@@ -21,12 +23,12 @@ export function createUsageBar(clock: UptimeClock, onPick: (pty: number) => void
   el.hidden = true;
   const fiveHour = createLimitMeter(() => t().limitFiveHour);
   const sevenDay = createLimitMeter(() => t().limitWeekly);
-  const context = document.createElement("div");
-  context.className = "usage-context";
-  context.innerHTML = '<span class="usage-label"></span><div class="usage-chips"></div>';
-  const label = context.querySelector<HTMLElement>(".usage-label")!;
-  const chips = context.querySelector<HTMLElement>(".usage-chips")!;
-  el.append(fiveHour.el, sevenDay.el, context);
+  const limitsBox = document.createElement("div");
+  limitsBox.className = "usage-limits";
+  limitsBox.append(fiveHour.el, sevenDay.el);
+  const cards = document.createElement("div");
+  cards.className = "usage-cards";
+  el.append(limitsBox, cards);
 
   let rows: AgentRow[] = [];
   let limits: Limits | null = null;
@@ -39,11 +41,11 @@ export function createUsageBar(clock: UptimeClock, onPick: (pty: number) => void
   const ticking = clock.switchFor(tick);
 
   const draw = () => {
-    const withContext = rows.filter((r) => r.agent.context !== null).sort((a, b) => a.number - b.number);
-    label.textContent = t().context;
-    chips.replaceChildren(...withContext.map((row) => createChip(row, onPick)));
-    context.hidden = withContext.length === 0;
-    el.hidden = limits === null && withContext.length === 0;
+    const inOrder = [...rows].sort((a, b) => a.number - b.number);
+    cards.replaceChildren(...inOrder.map((row) => createUsageCard(row, onPick)));
+    cards.hidden = inOrder.length === 0;
+    limitsBox.hidden = limits === null;
+    el.hidden = limits === null && inOrder.length === 0;
     tick(Date.now());
     ticking(limits !== null);
   };
@@ -57,17 +59,4 @@ export function createUsageBar(clock: UptimeClock, onPick: (pty: number) => void
       draw();
     },
   };
-}
-
-function createChip(row: AgentRow, onPick: (pty: number) => void): HTMLButtonElement {
-  const percent = Math.round(row.agent.context ?? 0);
-  const el = document.createElement("button");
-  el.type = "button";
-  el.className = `usage-chip ${fillOf(percent)}`;
-  el.innerHTML = '<span class="chip-name"></span><span class="chip-used"></span>';
-  el.querySelector(".chip-name")!.textContent = `${row.number} ${row.folder}`;
-  el.querySelector(".chip-used")!.textContent = `${percent}%`;
-  el.title = t().contextUsed(row.folder, percent);
-  el.addEventListener("click", () => onPick(row.pty));
-  return el;
 }

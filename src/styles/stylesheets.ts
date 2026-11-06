@@ -28,5 +28,6 @@ import "./recent-group-head.css";
 import "./recent-session-row.css";
 import "./agent-marks.css";
 import "./usage-bar.css";
+import "./usage-card.css";
 import "./agent-hints.css";
 import "./effects.css";

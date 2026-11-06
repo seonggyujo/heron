@@ -76,7 +76,7 @@ export const en = {
   tokenKinds: (input: string, output: string, write: string, read: string) =>
     `input ${input} · output ${output} · cache write ${write} · cache read ${read}`,
   agentMismatch: (selected: string, actual: string) => `Selected ${selected}, answered by ${actual}`,
-  agentPluginHint: "Install the heron-limits plugin to see usage limits and context use",
+  agentPluginHint: "Install the heron-limits plugin to see usage limits, context use and effort",
   hooksOffer: "See permission requests, questions and model checks too: Heron adds its hooks to Claude Code's settings.json.",
   hooksTurnOn: "Turn on",
   hooksTurningOn: "Turning on…",
@@ -111,8 +111,8 @@ export const en = {
   limitFiveHour: "5-hour limit",
   limitWeekly: "Weekly limit",
   limitResets: (left: string) => `resets in ${left}`,
-  context: "Context",
   contextUsed: (folder: string, percent: number) => `${folder}: ${percent}% of the context window used`,
+  effortLevel: (level: string) => `Effort: ${level}`,
 };
 
 export type Strings = typeof en;

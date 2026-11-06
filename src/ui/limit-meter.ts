@@ -2,9 +2,8 @@ import { fillOf, type Limit } from "../agent/usage";
 import { formatResetIn } from "../app/durations";
 import { t } from "../i18n/lang";
 
-// One usage limit in the usage bar:
-//   5-hour limit   resets in 2h 13m
-//   58%  ━━━━━━━━────────
+// One usage limit in the usage bar, on one line:
+//   5-hour limit  58% ━━━━━━──  resets in 2h 13m
 // The number and the bar turn yellow from 70% and red from 90%. Hidden
 // while the limit is unknown.
 
@@ -18,8 +17,8 @@ export function createLimitMeter(label: () => string): LimitMeter {
   const el = document.createElement("div");
   el.className = "limit-meter";
   el.innerHTML =
-    '<div class="limit-head"><span class="limit-label"></span><span class="limit-reset"></span></div>' +
-    '<div class="limit-main"><span class="limit-used"></span><span class="limit-track"><span class="limit-fill"></span></span></div>';
+    '<span class="limit-label"></span><span class="limit-used"></span>' +
+    '<span class="limit-track"><span class="limit-fill"></span></span><span class="limit-reset"></span>';
   const name = el.querySelector<HTMLElement>(".limit-label")!;
   const reset = el.querySelector<HTMLElement>(".limit-reset")!;
   const used = el.querySelector<HTMLElement>(".limit-used")!;

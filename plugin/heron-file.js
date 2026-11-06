@@ -1,8 +1,8 @@
 /**
  * Heron link. Inside a Heron pane the shell carries HERON_PANE (the pane's key) and
  * HERON_AGENT_DIR (a folder Heron watches). The status line keeps <key>.status.json there with
- * what Heron cannot get by itself: the usage limits, the context use, and the selected model
- * (Heron's hooks do not get it for a resumed session). Outside Heron nothing is written. The file is replaced in one step (write, then rename), so Heron never reads half of
+ * what Heron cannot get by itself: the usage limits, the context use, the reasoning effort, and the
+ * selected model (Heron's hooks do not get it for a resumed session). Outside Heron nothing is written. The file is replaced in one step (write, then rename), so Heron never reads half of
  * it. Never throws.
  */
 'use strict';
@@ -32,10 +32,13 @@ function statusOf(input) {
   const limits = input.rate_limits || {};
   const context = input.context_window || {};
   const model = input.model || {};
+  // Absent when the model takes no effort setting.
+  const effort = (input.effort || {}).level;
   return {
     v: VERSION,
     at: Date.now(),
     model: typeof model.id === 'string' && model.id ? model.id : null,
+    effort: typeof effort === 'string' && effort ? effort : null,
     context: finite(context.used_percentage) ? Number(context.used_percentage) : null,
     limits: { five_hour: limit(limits.five_hour), seven_day: limit(limits.seven_day) },
   };

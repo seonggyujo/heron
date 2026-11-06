@@ -1,6 +1,6 @@
 /* One row of the agent sidebar (ui/agent-item.ts): the pane number in a
    badge of the state's color (agent-marks.css), and the top line with the
-   folder, git branch, model and working time. The lines under it are
+   folder and working time. The lines under it are
    agent-state-line.css, the subagent lines subagent-lines.css. Collapsed,
    only the badge shows. */
 
@@ -57,44 +57,15 @@
   gap: 6px;
 }
 
-.agent-name,
-.agent-branch {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .agent-name {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--fg-soft);
   font-size: 15px;
   font-weight: 600;
-}
-
-/* The branch sits right after the folder and fills the gap before the
-   model; when the line runs short it gives way first. */
-.agent-name:has(+ .agent-branch) {
-  flex: 0 1 auto;
-}
-
-.agent-branch {
-  flex: 1 4 auto;
-  min-width: 0;
-  color: var(--fg-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.agent-model {
-  flex: none;
-  padding: 0 5px;
-  border-radius: 5px;
-  background: var(--bg-inset);
-  color: var(--fg-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  white-space: nowrap;
 }
 
 .agent-time {
