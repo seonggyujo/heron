@@ -20,8 +20,9 @@ export const ko: Strings = {
 
   settings: "설정",
   theme: "테마",
-  themeGreen: "초록 테마",
+  themeGray: "그레이 테마",
   themeBlack: "블랙 테마",
+  themeGreen: "초록 테마",
   language: "언어",
   fontSize: "글씨 크기",
   fontSmaller: "글씨 작게",

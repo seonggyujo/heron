@@ -115,12 +115,16 @@
   box-shadow: 0 0 0 2px var(--bg-bar-top), 0 0 0 3px var(--fg-dim);
 }
 
-.theme-green {
-  background: #8fd8a8;
+.theme-gray {
+  background: #5c5c5c;
 }
 
 .theme-black {
   background: #1c1c1f;
+}
+
+.theme-green {
+  background: #8fd8a8;
 }
 
 .tb-font-value {

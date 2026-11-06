@@ -67,7 +67,7 @@ test("bad saved values fall back to the defaults", async () => {
     "heron.fontSize": "30",
     "heron.defaultShell": "toString",
   });
-  expect(theme.currentTheme()).toBe("black");
+  expect(theme.currentTheme()).toBe("gray");
   expect(font.fontSizePref.get()).toBe(14);
   expect(shells.defaultShellPref.get()).toBeNull();
   expect(shells.defaultShellOf([])).toBe("powershell");
@@ -76,7 +76,7 @@ test("bad saved values fall back to the defaults", async () => {
 test("no storage at all: defaults, and nothing throws", async () => {
   broken = true;
   const { theme, font } = await start();
-  expect([theme.currentTheme(), font.fontSizePref.get()]).toEqual(["black", 14]);
+  expect([theme.currentTheme(), font.fontSizePref.get()]).toEqual(["gray", 14]);
 });
 
 test("setTheme saves and shows; applying writes nothing", async () => {
@@ -85,6 +85,8 @@ test("setTheme saves and shows; applying writes nothing", async () => {
   expect([store.get("heron.theme"), dataset.theme]).toEqual(["green", undefined]);
   theme.setTheme("black");
   expect([store.get("heron.theme"), dataset.theme]).toEqual(["black", "black"]);
+  theme.setTheme("gray");
+  expect([store.get("heron.theme"), dataset.theme]).toEqual(["gray", "gray"]);
   store.clear();
   theme.applyTheme();
   expect(store.size).toBe(0);
@@ -98,7 +100,7 @@ test("reset: every pref back to its default and every heron.* key gone, the hook
   prefs.agentHooksWantedPref.set(true);
   reset.forgetSettings();
   expect([...store.keys()]).toEqual(["other"]);
-  expect(theme.currentTheme()).toBe("black");
+  expect(theme.currentTheme()).toBe("gray");
   expect(font.fontSizePref.get()).toBe(14);
   expect(shells.defaultShellOf(["gitbash", "cmd"])).toBe("gitbash");
   expect(prefs.motionPref.get()).toBe(true);

@@ -35,12 +35,13 @@
   border-color: var(--fg);
 }
 
-/* Same color as xterm's default background. */
+/* Same color as the terminal background (BACKGROUND in
+   terminal/terminal-view.ts). */
 .pane-body {
   flex: 1;
   min-height: 0;
   padding: 4px 4px 4px 8px;
-  background: #000;
+  background: #1e1e1e;
   border-radius: 0 0 9px 9px;
   overflow: hidden;
 }
@@ -54,6 +55,13 @@
 
 .pane-term .xterm {
   height: 100%;
+}
+
+/* xterm 6 paints the theme background on its scrollable element only and
+   leaves this one black (xterm.css), which showed as a black strip below
+   the last row. See-through, it shows .pane-body's color. */
+.pane-term .xterm .xterm-viewport {
+  background-color: transparent;
 }
 
 /* The terminal herons (pane/pane-herons.ts): a canvas over the terminal's

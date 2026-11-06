@@ -7,8 +7,9 @@ import { attachClipboardKeys } from "./keys";
 import { attachLinks } from "./links";
 import { attachShiftWheel } from "./wheel";
 
-// One xterm instance with fit + WebGL. The terminal itself is not styled:
-// default xterm colors, only the Windows console font. No IPC here: the pane
+// One xterm instance with fit + WebGL. The terminal is barely styled: a dark
+// grey background, xterm's default text and ANSI colors, the Windows console
+// font, the same in every app theme. No IPC here: the pane
 // wires this to a PTY. Falls back to the DOM renderer when WebGL is
 // unavailable or lost. On dispose the WebGL context is let go at once: the
 // addon does not, and a page keeps only so many contexts alive.
@@ -16,6 +17,8 @@ import { attachShiftWheel } from "./wheel";
 const log = createLogger("terminal");
 
 const FONT = '"Cascadia Mono", Consolas, monospace';
+/** macOS Terminal's dark grey (Basic profile, dark mode) instead of xterm's black. .pane-body (styles/workspace.css) paints the padding around the terminal the same. */
+const BACKGROUND = "#1e1e1e";
 /** Double-click selects a word up to these (heron-c's set: brackets, quotes, pipes, separators). */
 const WORD_SEPARATORS = " ()[]{}<>'\"`,;|";
 
@@ -35,6 +38,7 @@ export class TerminalView {
     this.term = new Terminal({
       fontFamily: FONT,
       fontSize,
+      theme: { background: BACKGROUND },
       // Bounded history keeps memory flat under heavy output.
       scrollback: 5000,
       // Lets xterm reflow the way ConPTY expects on resize.

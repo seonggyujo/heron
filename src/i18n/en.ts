@@ -24,8 +24,9 @@ export const en = {
   // Settings
   settings: "Settings",
   theme: "Theme",
-  themeGreen: "Green theme",
+  themeGray: "Gray theme",
   themeBlack: "Black theme",
+  themeGreen: "Green theme",
   language: "Language",
   fontSize: "Font size",
   fontSmaller: "Smaller font",

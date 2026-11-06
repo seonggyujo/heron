@@ -16,8 +16,8 @@
 
 Heron (formerly greenterm) opens several shells side by side in one window and lays them out for you. There are no
 split shortcuts to learn: every action is a button or a drag. The terminals themselves are left untouched
-(default colors, your shell's own output), while the window around them has a black (or green)
-theme that shows which shells are alive. The one exception: in a pane where Claude Code runs, little pixel
+(default text colors on macOS Terminal's dark grey, your shell's own output), while the window
+around them has a gray, black or green theme that shows which shells are alive. The one exception: in a pane where Claude Code runs, little pixel
 herons live in the empty cells (see below).
 
 Built with Tauri v2, vanilla TypeScript, xterm.js (WebGL) and ConPTY.
@@ -146,8 +146,8 @@ settings); a failing exit keeps the pane open with a red exit-code badge.
 
 ### Settings
 
-The gear button in the title bar opens the settings: black or green window theme (black at
-first), language (English or Korean; it starts in the Windows display language), terminal font size,
+The gear button in the title bar opens the settings: gray, black or green window theme (gray at
+first, matching the terminal background), language (English or Korean; it starts in the Windows display language), terminal font size,
 animations on or off, terminal herons per pane (off, 1, 2 or 3), whether a clean `exit` closes the pane, and Claude Code hooks. Every change applies at once and is remembered. **Reset** below them asks once more before it puts every setting back to
 its default.
 

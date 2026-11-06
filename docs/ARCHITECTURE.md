@@ -3,9 +3,9 @@
 한 파일은 한 가지 기능만 맡는다. 파일이 약 150줄을 넘으면 기능 단위로 쪼갠다.
 계산 로직(그리드 배치, 배치 flush 규칙 등)은 DOM, Tauri API와 분리해서 순수 함수로 둔다.
 
-터미널 안쪽은 꾸미지 않는다. xterm 기본 색, Cascadia Mono 글꼴, 셸이 출력한 바이트만 그린다.
+터미널 안쪽은 꾸미지 않는다. 배경만 맥 터미널(Basic, 다크 모드) 같은 짙은 회색(#1e1e1e)이고 글자색과 ANSI 색은 xterm 기본, 글꼴은 Cascadia Mono, 셸이 출력한 바이트만 그린다. 테마가 바뀌어도 터미널 색은 그대로다.
 예외는 터미널 속 왜가리(설정에서 pane마다 0~3마리) 하나다. 에이전트가 있는 pane의 빈 칸 위 캔버스에만 덧그리고, 터미널 내용은 바꾸지 않는다.
-테마(기본 블랙, 초록)와 상태 표시는 앱 틀(타이틀바, pane 테두리와 헤더)에만 둔다.
+테마(기본 그레이, 블랙, 초록. 그레이는 터미널 배경색에 맞춘 회색)와 상태 표시는 앱 틀(타이틀바, pane 테두리와 헤더)에만 둔다.
 
 ## 프론트엔드 `src/`
 
@@ -35,7 +35,7 @@
 | `app/workspace.ts` | 순수 함수: 저장한 지난 작업의 모양(pane마다 셸, 폴더, 세션 id와 사용자 배치)과 읽어 온 값 검사. 모르는 셸은 기본 셸로, UUID가 아닌 세션은 버린다 |
 | `app/workspace-store.ts` | 지난 작업을 localStorage(`heron.workspace`)에 읽고 쓰기. 설정 초기화로 지워져도 다음 저장 때 다시 쓴다 |
 | `app/perf-monitor.ts` | dev 전용 long task(50ms 초과) 로그 |
-| `app/theme.ts` | 앱 틀 테마(black 기본, green) 적용과 저장(`prefs.ts`의 `pref()`) |
+| `app/theme.ts` | 앱 틀 테마(gray 기본, black, green. 설정에 보이는 순서 `THEMES`) 적용과 저장(`prefs.ts`의 `pref()`) |
 | `app/log.ts` | 범위별 로거. dev에서는 콘솔과 `tauri dev` 터미널로, prod에서는 warn/error만 콘솔로 |
 | `app/shells.ts` | 셸 표시 이름, + 버튼 기본 셸 저장(`pref()`). 저장한 셸이 없어졌으면 처음 찾은 셸 |
 | `app/font-size.ts` | 터미널 글씨 크기(10~24px) 저장(`pref()`) |
@@ -62,7 +62,7 @@
 | `ui/font-size-control.ts` | `A−` `A+` 버튼(설정 창 안) |
 | `ui/terminal-count.ts` | 실행 중 터미널 개수 |
 | `ui/tidy-button.ts` | 자동 격자로 되돌리는 버튼. 수동 배치일 때만 보이고, action 맨 왼쪽이라 나타나도 다른 버튼 위치가 안 바뀐다 |
-| `ui/theme-toggle.ts` | 테마 선택 동그라미 두 개(블랙, 초록. 설정 창 안, `radio-group.ts`) |
+| `ui/theme-toggle.ts` | 테마 선택 동그라미 세 개(그레이, 블랙, 초록. 설정 창 안, `radio-group.ts`) |
 | `ui/empty-state.ts` | 터미널 0개일 때 큰 + 버튼과 깜빡이는 `_` |
 | `ui/agent-sidebar.ts` | 왼쪽 사이드바, 늘 보인다: 맨 위 "새 에이전트" 버튼, 에이전트가 있는 pane을 급한 순(나를 기다림, 끝남, 작업 중, 쉬는 중)으로(없으면 없다는 한 줄), 최근 세션, 맨 아래에 안내(`agent-hints.ts`). 버튼과 최근 세션은 `wire-sessions.ts`가 만들어 넘긴다. 번호 배지만 남게 접을 수 있고 기억한다. 줄은 보드가 바뀔 때만 새로 만들고, 1초 갱신은 경과 시간만 바꾼다 |
 | `ui/agent-hints.ts` | 사이드바 맨 아래 안내: 먼저 Heron의 Claude Code 훅 켜기 제안(못 켜면 이유), 훅이 켜지거나 제안을 닫으면 heron-limits 플러그인 안내. 각각 × 로 영영 닫는다 |
@@ -93,7 +93,7 @@
 | `ipc/attention.ts` | 작업 표시줄 버튼: 깜빡임 명령(`flash_taskbar`), 진행 막대(없음, 흐름, 멈춤)와 아이콘 위 그림(RGBA). 막대와 그림은 Tauri 창 API(`setProgressBar`, `setOverlayIcon`, 아래는 ITaskbarList3)로, 바꿀 때까지 남는다 |
 | `ipc/window-menu.ts` | 창의 시스템 메뉴 명령(`show_window_menu`): 타이틀바 우클릭이면 마우스 자리, Alt+Space면 창 모서리 |
 | `ipc/log.ts` | 프론트 로그 한 줄을 백엔드로(`frontend_log`. dev에서만 `app/log.ts`가 부른다) |
-| `terminal/terminal-view.ts` | xterm 생성, fit·webgl addon, context loss 시 DOM 렌더러로 fallback. 닫을 때 WebGL 컨텍스트를 바로 놓아 준다(addon은 놓지 않아서 많이 열고 닫으면 페이지의 컨텍스트 한도에 닿는다). 더블클릭 단어 구분자는 heron-c와 같게(괄호, 따옴표, `<>`, `;`, `|`) |
+| `terminal/terminal-view.ts` | xterm 생성(배경 #1e1e1e, 둘레 여백은 `styles/workspace.css`의 `.pane-body`가 같은 색으로), fit·webgl addon, context loss 시 DOM 렌더러로 fallback. 닫을 때 WebGL 컨텍스트를 바로 놓아 준다(addon은 놓지 않아서 많이 열고 닫으면 페이지의 컨텍스트 한도에 닿는다). 더블클릭 단어 구분자는 heron-c와 같게(괄호, 따옴표, `<>`, `;`, `|`) |
 | `terminal/flow-control.ts` | `write` 콜백으로 대기 바이트 추적, 256KB 넘으면 pause, 32KB 밑이면 resume |
 | `terminal/keys.ts` | WebView 단축키 차단, Ctrl+C/V(붙여넣기는 브라우저의 paste 이벤트로 `clipboard.ts`가 받는다) |
 | `terminal/clipboard.ts` | 복사·붙여넣기, 우클릭(선택 있으면 복사, 없으면 붙여넣기. 앱이 마우스 추적 중이면 앱에 넘김, Shift+우클릭은 항상 처리). 모든 붙여넣기(Ctrl+V, 우클릭, 파일 끌어 놓기)는 `pasteInto`를 거쳐서, bracketed paste 중에는 ESC를 빼 붙여넣은 글이 괄호를 일찍 닫고 키 입력처럼 실행되지 않게 한다 |
@@ -141,7 +141,7 @@
 | `layout/fit-scheduler.ts` | ResizeObserver + requestAnimationFrame으로 fit을 묶음. 프레임당 10ms 예산, 남으면 다음 프레임 |
 | `layout/flip.ts` | 재배치 시 이전 위치에서 새 위치로 transform 애니메이션 |
 | `styles/stylesheets.ts` | 앱의 모든 스타일시트를 캐스케이드 순서대로 import(xterm, 테마 토큰과 기본 규칙, 기능별 파일) |
-| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히, pane 틀과 터미널 칸, 왜가리 캔버스 층), `pane-header`(헤더 틀, 점, 셸 이름, exit 뱃지, 실행 시간, 닫기), `pane-header-text`(헤더 가운데 글자: 폴더, 브랜치, 제목과 하는 일), `split`(경계선, 드롭 미리보기), `settings`, `switch`(설정의 켜기/끄기 스위치), `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄의 틀과 윗줄: 폴더, 시간), `agent-state-line`(그 아래 상태 줄과 변경량, 모델 경고), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 두 줄, 카드 줄), `usage-card`(에이전트 카드), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
+| `styles/*.css` | 기능별 스타일: `themes`(색 토큰, gray/black/green, 활동 종류 색 `--act-*`), `base`, `titlebar`, `controls`, `shell-menu`, `workspace`(사이드바와 작업 영역을 나란히, pane 틀과 터미널 칸, 왜가리 캔버스 층), `pane-header`(헤더 틀, 점, 셸 이름, exit 뱃지, 실행 시간, 닫기), `pane-header-text`(헤더 가운데 글자: 폴더, 브랜치, 제목과 하는 일), `split`(경계선, 드롭 미리보기), `settings`, `switch`(설정의 켜기/끄기 스위치), `empty-state`, `agent-sidebar`(사이드바 틀), `agent-item`(사이드바 한 줄의 틀과 윗줄: 폴더, 시간), `agent-state-line`(그 아래 상태 줄과 변경량, 모델 경고), `agent-activity`(지금 하는 일의 점, 이번 턴 도구 블록과 종류 색. 점은 pane 헤더도 쓴다), `agent-tokens`(토큰 줄), `subagent-lines`(줄 아래 서브에이전트), `agent-marks`(배지와 pane 점의 에이전트 상태 색, 가리킨 pane 테두리), `agent-hints`(사이드바 아래 안내), `new-agent`(새 에이전트 split 버튼), `agent-folder-menu`(폴더 메뉴), `recent-sessions`(최근 세션 틀, 가장자리 "더 있음"), `recent-group-head`(폴더 머리), `recent-session-row`(세션 한 줄, 삭제 질문), `usage-bar`(하단바, 한도 두 줄, 카드 줄), `usage-card`(에이전트 카드), `effects`(Animations 끄기 규칙 포함. 상태 점은 출력이 올 때만, 에이전트가 일하는 pane에서는 깜빡이지 않는다) |
 
 의존 방향: `main.ts`, `wire-*.ts` → `ui/`, `pane/`, `layout/` → `buddy/` → `agent/`, `terminal/`, `ipc/`, `app/`, `i18n/`. (`ui/`, `pane/`, `layout/`은 `buddy/` 아래 모듈도 바로 쓴다.)
 `wire-*.ts`끼리는 `wire-agents.ts` → `wire-git.ts`만 있다. 나머지는 `main.ts`가 서로의 함수를 넘겨 잇는다.

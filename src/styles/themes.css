@@ -1,6 +1,7 @@
-/* App chrome color themes. The terminal itself is never themed.
-   Black is the default: <html data-theme="black"> (app/theme.ts, set before
-   the first paint); without it the :root list below is green.
+/* App chrome color themes. The terminal does not follow them: its colors
+   are fixed in terminal/terminal-view.ts.
+   Gray is the default: <html data-theme="gray">, or "black" (app/theme.ts,
+   set before the first paint); without it the :root list below is green.
    Every chrome color used in other style files must be one of these
    tokens, so a theme only needs to redefine this list. */
 
@@ -80,5 +81,38 @@
   --badge-bg: #232326;
   --badge-fg: #a5a5aa;
   --light-off: #2c2c30;
+  --light-off-ring: rgb(255 255 255 / 0.12);
+}
+
+/* Gray: neutral greys built around the terminal's own background, macOS
+   Terminal's dark grey (#1e1e1e), so the gaps between panes are that color
+   and the bars are a step lighter. */
+:root[data-theme="gray"] {
+  --bg-app: #1e1e1e;
+  --bg-pane: #252525;
+  --bg-bar-top: #2d2d2d;
+  --bg-bar-bottom: #262626;
+  --bg-raised: #2a2a2a;
+  --bg-control: #303030;
+  --bg-hover: #3a3a3a;
+  --bg-active: #282828;
+  --bg-inset: #1f1f1f;
+
+  --border: #3b3b3b;
+  --border-soft: #313131;
+  --border-strong: #555555;
+
+  --fg: #ececec;
+  --fg-soft: #cdcdcd;
+  --fg-dim: #a3a3a3;
+  --fg-muted: #7c7c7c;
+
+  --glow: rgb(255 255 255 / 0.16);
+  --flash: rgb(255 255 255 / 0.55);
+  --flash-glow: rgb(255 255 255 / 0.12);
+
+  --badge-bg: #353535;
+  --badge-fg: #b3b3b3;
+  --light-off: #3c3c3c;
   --light-off-ring: rgb(255 255 255 / 0.12);
 }

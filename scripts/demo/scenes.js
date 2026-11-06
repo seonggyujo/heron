@@ -97,7 +97,7 @@ export const SCENES = {
     async run(stage, ui) {
       await ui.click(await stage.gear());
       await sleep(900);
-      for (const [selector, ms] of [[".theme-green", 1500], [".theme-black", 1200]]) {
+      for (const [selector, ms] of [[".theme-black", 1200], [".theme-green", 1500], [".theme-gray", 1200]]) {
         await ui.click(await ui.at(selector));
         await sleep(ms);
       }
